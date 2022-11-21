@@ -7,8 +7,3 @@ plugins:
   - name: risk
 
 default_ecosystem: ethereum
-
-ethereum:
-  default_network: mainnet
-  mainnet:
-    default_provider: alchemy

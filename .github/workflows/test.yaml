@@ -29,4 +29,4 @@ jobs:
       run: hatch build
 
     - name: Run functional tests
-      run: hatch run ape test -s -v
+      run: hatch run ape test -s -v DEBUG
