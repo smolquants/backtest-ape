@@ -4,10 +4,6 @@ plugins:
   - name: solidity
   - name: notebook
   - name: etherscan
+  - name: risk
 
 default_ecosystem: ethereum
-
-ethereum:
-  default_network: mainnet
-  mainnet:
-    default_provider: alchemy

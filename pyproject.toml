@@ -22,21 +22,26 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = []
+dependencies = [
+  "eth-ape>=0.5.2<0.6.0",
+]
 dynamic = ["version"]
 
 [project.urls]
-Documentation = "https://github.com/unknown/backtest-ape#readme"
-Issues = "https://github.com/unknown/backtest-ape/issues"
-Source = "https://github.com/unknown/backtest-ape"
+Documentation = "https://github.com/smolquants/backtest-ape#readme"
+Issues = "https://github.com/smolquants/backtest-ape/issues"
+Source = "https://github.com/smolquants/backtest-ape"
 
 [tool.hatch.version]
-path = "backtest_ape/__about__.py"
+path = "__about__.py"
 
 [tool.hatch.envs.default]
 dependencies = [
   "pytest",
   "pytest-cov",
+  "black",
+  "flake8",
+  "isort",
 ]
 [tool.hatch.envs.default.scripts]
 cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=backtest_ape --cov=tests"
@@ -49,7 +54,7 @@ python = ["38", "39", "310", "311"]
 branch = true
 parallel = true
 omit = [
-  "backtest_ape/__about__.py",
+  "__about__.py",
 ]
 
 [tool.coverage.report]
