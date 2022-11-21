@@ -28,5 +28,5 @@ jobs:
     - name: Build with hatch
       run: hatch build
 
-    - name: Run functional tests
+    - name: Run tests
       run: hatch run ape test -s -v DEBUG
