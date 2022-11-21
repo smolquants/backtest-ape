@@ -4,6 +4,7 @@ plugins:
   - name: solidity
   - name: notebook
   - name: etherscan
+  - name: risk
 
 default_ecosystem: ethereum
 

@@ -22,7 +22,9 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = []
+dependencies = [
+  "eth-ape>=0.5.2<0.6.0",
+]
 dynamic = ["version"]
 
 [project.urls]
@@ -37,6 +39,9 @@ path = "backtest_ape/__about__.py"
 dependencies = [
   "pytest",
   "pytest-cov",
+  "black",
+  "flake8",
+  "isort",
 ]
 [tool.hatch.envs.default.scripts]
 cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=backtest_ape --cov=tests"
