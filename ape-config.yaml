@@ -1,0 +1,13 @@
+name: backtest-ape
+
+plugins:
+  - name: solidity
+  - name: notebook
+  - name: etherscan
+
+default_ecosystem: ethereum
+
+ethereum:
+  default_network: mainnet
+  mainnet:
+    default_provider: alchemy
