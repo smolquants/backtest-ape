@@ -41,7 +41,4 @@ abstract contract Backtest {
     /// @notice Reports the current value of the strategy
     /// @return The current value
     function value() public view virtual returns (uint256);
-
-    // TODO: make super general so can set public variables
-    // TODO: through wrappers on contracts targeting (for forward)
 }
