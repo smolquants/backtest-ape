@@ -23,7 +23,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
-  "eth-ape>=0.5.2<0.6.0",
+  "eth-ape>=0.5.2,<0.6.0",
 ]
 dynamic = ["version"]
 
