@@ -22,6 +22,11 @@ contract UniswapV3LPBacktest is Backtest {
         factory = manager.factory();
         WETH9 = manager.WETH9();
     }
+    
+    /// @notice Pushes token id to storage to track NFT positions
+    function push(uint256 tokenId) external {
+        tokenIds.push(tokenId);
+    }
         
     /// @notice Reports the ETH value of the LP token using TWAP for other token
     /// @return value_ The current ETH value of the LP tokens owned by this contract
