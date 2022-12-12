@@ -26,7 +26,7 @@ jobs:
       run: pip install -r requirements-dev.txt
 
     - name: Install Ape plugins
-      run: ape plugins install .
+      run: ape plugins install . --yes
 
     - name: Compile contracts
       run: ape compile --size
