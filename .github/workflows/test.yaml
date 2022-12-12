@@ -27,9 +27,16 @@ jobs:
 
     - name: Install Ape plugins
       run: ape plugins install . --yes
+    
+    - name: Install Foundry
+      uses: onbjerg/foundry-toolchain@v1
+      with:
+        version: nightly
 
     - name: Compile contracts
       run: ape compile --size
       
     - name: Run tests
+      env:
+        WEB3_ALCHEMY_PROJECT_ID: ${{ secrets.WEB3_ALCHEMY_PROJECT_ID }}
       run: ape test -s
