@@ -1,9 +1,39 @@
 name: backtest-ape
 
 plugins:
+  - name: alchemy
   - name: solidity
+  - name: foundry
   - name: notebook
   - name: etherscan
   - name: risk
 
 default_ecosystem: ethereum
+
+ethereum:
+  default_network: mainnet-fork
+  mainnet_fork:
+    default_provider: foundry
+
+foundry:
+  fork:
+    ethereum:
+      mainnet:
+        upstream_provider: alchemy
+
+dependencies:
+  - name: OpenZeppelin
+    github: OpenZeppelin/openzeppelin-contracts
+    version: 4.7.3
+  - name: UniswapV3Core
+    github: Uniswap/v3-core
+    branch: 0.8
+  - name: UniswapV3Periphery
+    github: Uniswap/v3-periphery
+    branch: 0.8
+
+solidity:
+  import_remapping:
+    - "@openzeppelin/contracts=OpenZeppelin/4.7.3"
+    - "@uniswap/v3-periphery/contracts=UniswapV3Periphery/v0.8"
+    - "@uniswap/v3-core/contracts=UniswapV3Core/v0.8"
