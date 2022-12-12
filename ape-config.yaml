@@ -1,13 +1,25 @@
 name: backtest-ape
 
 plugins:
+  - name: alchemy
   - name: solidity
-  - name: hardhat
+  - name: foundry
   - name: notebook
   - name: etherscan
   - name: risk
 
 default_ecosystem: ethereum
+
+ethereum:
+  default_network: mainnet-fork
+  mainnet_fork:
+    default_provider: foundry
+
+foundry:
+  fork:
+    ethereum:
+      mainnet:
+        upstream_provider: alchemy
 
 dependencies:
   - name: OpenZeppelin
