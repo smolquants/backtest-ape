@@ -27,6 +27,11 @@ jobs:
 
     - name: Install Ape plugins
       run: ape plugins install . --yes
+    
+    - name: Install Foundry
+      uses: onbjerg/foundry-toolchain@v1
+      with:
+        version: nightly
 
     - name: Compile contracts
       run: ape compile --size
