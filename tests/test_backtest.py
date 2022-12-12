@@ -1,8 +1,24 @@
-def test_execute(backtest, acc):
-    pass
+def test_execute(backtest, WETH9, acc):
+    # deposit 1 eth to WETH through backtester
+    target = WETH9.address
+    data = WETH9.deposit.as_transaction().data
+    val = 1000000000000000000  # 1 wad
+    prior_acc_bal = acc.balance
+
+    # execute deposit through backtester
+    receipt = backtest.execute(target, data, val, value=val, sender=acc)
+
+    # check backtester credited with 1 WETH
+    assert WETH9.balanceOf(backtest) == val
+
+    # check no balance of eth in backtester
+    assert backtest.balance == 0
+
+    # check the eth came from acc
+    assert acc.balance == prior_acc_bal - val - receipt.total_fees_paid
 
 
-def test_multicall(backtest, acc):
+def test_multicall(backtest, WETH9, acc):
     pass
 
 
