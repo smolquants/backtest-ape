@@ -2,6 +2,7 @@ name: backtest-ape
 
 plugins:
   - name: solidity
+  - name: hardhat
   - name: notebook
   - name: etherscan
   - name: risk
