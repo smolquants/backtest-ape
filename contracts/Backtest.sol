@@ -8,7 +8,7 @@ abstract contract Backtest {
     
     /// @notice Executes a tx for the strategy
     /// @param target The address of the contract to call
-    /// @param data The call data to call the target with
+    /// @param data The calldata to call the target with
     /// @param val The msg.value to pay the target
     /// @return result_ The result of the call
     function execute(address target, bytes calldata data, uint256 val) public payable returns (bytes memory result_) {
@@ -20,7 +20,7 @@ abstract contract Backtest {
     
     /// @notice Executes multiple txs for the strategy
     /// @param targets The addresses of the contracts to call
-    /// @param datas The call datas to call each target with
+    /// @param datas The calldatas to call each target with
     /// @param values The msg.values to pay each target
     /// @return results_ The results of each call
     function multicall(address[] calldata targets, bytes[] calldata datas, uint256[] calldata values) external payable returns (bytes[] memory results_) {
