@@ -5,9 +5,8 @@ pragma solidity ^0.8.17;
 /// @notice Simple contract with public storage vars
 contract MockContract {
     address public owner;
-    
+
     constructor() {
         owner = msg.sender;
     }
 }
-

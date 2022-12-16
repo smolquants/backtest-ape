@@ -14,4 +14,3 @@ contract MockSetter is Setter, MockContract {
         emit Set(_owner);
     }
 }
-

@@ -9,6 +9,6 @@ contract MockBacktest is Backtest {
     function value() public view virtual override returns (uint256) {
         return address(this).balance;
     }
-    
+
     fallback() external payable {}
 }
