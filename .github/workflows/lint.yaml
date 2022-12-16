@@ -2,7 +2,18 @@ name: "lint"
 on: push
 
 jobs:
-  run:
+  solidity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install node.js dependencies
+        run: yarn --frozen-lockfile
+      - name: Run linter on *.sol
+        run: yarn lint:check
+  python:
     name: Python ${{ matrix.python-version }} on ${{ startsWith(matrix.os, 'macos-') && 'macOS' || 'Linux' }}
     runs-on: ${{ matrix.os }}
     strategy:

@@ -122,3 +122,8 @@ version.py
 
 # Ape stuff
 .build/
+
+# node
+node_modules
+*.lock
+
