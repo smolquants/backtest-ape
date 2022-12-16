@@ -11,11 +11,7 @@ abstract contract Backtest {
     /// @param data The calldata to call the target with
     /// @param val The msg.value to pay the target
     /// @return result_ The result of the call
-    function execute(
-        address target,
-        bytes calldata data,
-        uint256 val
-    ) public payable returns (bytes memory result_) {
+    function execute(address target, bytes calldata data, uint256 val) public payable returns (bytes memory result_) {
         require(val <= msg.value, "msg.value < value");
         (bool success, bytes memory result) = target.call{value: val}(data);
         if (!success) revert("failed to execute strategy");

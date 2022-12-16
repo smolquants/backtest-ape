@@ -9,17 +9,13 @@ abstract contract Setter {
     /// @notice Makes internal calls to the setter
     /// @param datas The calldatas to call the setter with
     /// @return results_ The results of the internal calls
-    function calls(
-        bytes[] calldata datas
-    ) external returns (bytes[] memory results_) {
+    function calls(bytes[] calldata datas) external returns (bytes[] memory results_) {
         // init cache var
         results_ = new bytes[](datas.length);
 
         // loop through all inputs and make internal calls
         for (uint256 i = 0; i < datas.length; i++) {
-            (bool success, bytes memory result) = address(this).delegatecall(
-                datas[i]
-            );
+            (bool success, bytes memory result) = address(this).delegatecall(datas[i]);
             if (!success) revert("failed to make internal calls");
             results_[i] = result;
         }

@@ -33,31 +33,14 @@ contract UniswapV3LPBacktest is Backtest {
     function value() public view virtual override returns (uint256 value_) {
         for (uint256 i = 0; i < tokenIds.length; ++i) {
             uint256 tokenId = tokenIds[i];
-            (
-                ,
-                ,
-                address token0,
-                address token1,
-                uint24 fee,
-                ,
-                ,
-                ,
-                ,
-                ,
-                ,
-
-            ) = manager.positions(tokenId);
+            (, , address token0, address token1, uint24 fee, , , , , , , ) = manager.positions(tokenId);
 
             // get the sqrt price
             address pool = getPool(token0, token1, fee);
             uint160 sqrtRatioX96 = getSqrtRatioX96(pool);
 
             // get the token balances owned by LP from position manager
-            (uint256 amount0, uint256 amount1) = PositionValue.total(
-                manager,
-                tokenId,
-                sqrtRatioX96
-            );
+            (uint256 amount0, uint256 amount1) = PositionValue.total(manager, tokenId, sqrtRatioX96);
 
             // get the TWAP value in ETH terms of each token held by position manager
             uint256 val0 = calcAmountInETH(token0, amount0);
@@ -70,11 +53,7 @@ contract UniswapV3LPBacktest is Backtest {
 
     /// @notice Gets the pool for token0, token1, fee
     /// @return The pool address for token0, token1, fee
-    function getPool(
-        address token0,
-        address token1,
-        uint24 fee
-    ) public view returns (address) {
+    function getPool(address token0, address token1, uint24 fee) public view returns (address) {
         return IUniswapV3Factory(factory).getPool(token0, token1, fee);
     }
 
@@ -94,10 +73,7 @@ contract UniswapV3LPBacktest is Backtest {
 
     /// @notice Calculates the amount out in ETH terms using the ETH price for token
     /// @return amountOut_ The current ETH value for the amount in of token
-    function calcAmountInETH(
-        address token,
-        uint256 amountIn
-    ) public view returns (uint256 amountOut_) {
+    function calcAmountInETH(address token, uint256 amountIn) public view returns (uint256 amountOut_) {
         if (token == WETH9) return amountIn;
 
         // iterate over fee tiers for weighted average in amount out
@@ -114,12 +90,7 @@ contract UniswapV3LPBacktest is Backtest {
             if (pool == address(0)) continue; // if no pool exists, try other fee tiers
 
             int24 tick = getTick(pool);
-            amountOutCumulative += OracleLibrary.getQuoteAtTick(
-                tick,
-                uint128(amountIn),
-                token,
-                WETH9
-            );
+            amountOutCumulative += OracleLibrary.getQuoteAtTick(tick, uint128(amountIn), token, WETH9);
             weights++;
         }
         require(weights > 0, "token not paired with WETH in a pool");
