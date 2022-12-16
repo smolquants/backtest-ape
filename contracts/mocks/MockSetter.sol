@@ -1,0 +1,14 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+import {Setter} from "../Setter.sol";
+import {MockContract} from "./MockContract.sol";
+
+/// @title Mock Setter
+/// @notice Setter overriding a public variable in simple contract
+contract MockSetter is Setter, MockContract {
+    function set(address _owner) external {
+        owner = _owner;
+    }
+}
+
