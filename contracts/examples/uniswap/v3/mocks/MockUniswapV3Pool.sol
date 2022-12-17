@@ -1,9 +1,11 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.12;
 
 import {Setter} from "../../../../Setter.sol";
 import {UniswapV3Pool} from "@uniswap/v3-core/contracts/UniswapV3Pool.sol";
 
+/// @dev DO NOT ACTUALLY DEPLOY
+/// @dev See: https://github.com/Uniswap/v3-core/blob/0.8/contracts/UniswapV3Pool.sol
 contract MockUniswapV3Pool is UniswapV3Pool, Setter {
     function setSlot0(Slot0 memory _slot0) external {
         slot0 = _slot0;

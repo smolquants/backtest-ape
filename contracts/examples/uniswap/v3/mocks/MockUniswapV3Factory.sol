@@ -1,9 +1,11 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.12;
 
 import {MockUniswapV3Pool} from "./MockUniswapV3Pool.sol";
 import {UniswapV3Factory} from "@uniswap/v3-core/contracts/UniswapV3Factory.sol";
 
+/// @dev DO NOT ACTUALLY DEPLOY
+/// @dev See https://github.com/Uniswap/v3-core/blob/0.8/contracts/UniswapV3Factory.sol
 contract MockUniswapV3Factory is UniswapV3Factory {
     /// @notice Overrides to deploy the mock pool
     function createMockPool(address tokenA, address tokenB, uint24 fee) external noDelegateCall returns (address pool) {
