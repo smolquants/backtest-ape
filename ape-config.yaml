@@ -25,6 +25,9 @@ dependencies:
   - name: OpenZeppelin
     github: OpenZeppelin/openzeppelin-contracts
     version: 4.7.3
+  - name: UniswapV2Core
+    github: Uniswap/v2-core
+    branch: master
   - name: UniswapV3Core
     github: Uniswap/v3-core
     branch: 0.8
@@ -37,3 +40,4 @@ solidity:
     - "@openzeppelin/contracts=OpenZeppelin/4.7.3"
     - "@uniswap/v3-periphery/contracts=UniswapV3Periphery/v0.8"
     - "@uniswap/v3-core/contracts=UniswapV3Core/v0.8"
+    - "@uniswap/v2-core/contracts=UniswapV2Core"
