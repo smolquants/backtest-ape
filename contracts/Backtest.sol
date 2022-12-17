@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.0;
 
 /// @title Backtest Strategy Wrapper
 /// @notice Abstract Backtest wrapper to execute on-chain strategies through for back (and forward) testing
