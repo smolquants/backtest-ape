@@ -1,0 +1,63 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "backtest-ape"
+description = 'Backtesting and forward-testing (via Monte Carlo sims) for DeFi strategies.'
+readme = "README.md"
+requires-python = ">=3.8,<3.11"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "fmrmf", email = "m@fmrmf.xyz" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "eth-ape>=0.5.2,<0.6.0",
+]
+dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://github.com/smolquants/backtest-ape#readme"
+Issues = "https://github.com/smolquants/backtest-ape/issues"
+Source = "https://github.com/smolquants/backtest-ape"
+
+[tool.hatch.version]
+path = "backtest_ape/__about__.py"
+
+[tool.hatch.envs.default]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+  "black",
+  "flake8",
+]
+[tool.hatch.envs.default.scripts]
+cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=backtest_ape --cov=tests"
+no-cov = "cov --no-cov"
+
+[[tool.hatch.envs.test.matrix]]
+python = ["38", "39", "310"]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+omit = [
+  "backtest_ape/__about__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]

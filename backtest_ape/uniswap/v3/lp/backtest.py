@@ -1,7 +1,7 @@
 import click
 from ape import accounts
 
-from .utils import setup
+from ..utils import setup
 
 
 def main():
