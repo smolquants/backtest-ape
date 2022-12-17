@@ -40,4 +40,4 @@ jobs:
       run: black --check .
 
     - name: Run flake8
-      run: flake8 tests
+      run: flake8 tests scripts

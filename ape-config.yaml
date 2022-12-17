@@ -40,4 +40,4 @@ solidity:
     - "@openzeppelin/contracts=OpenZeppelin/4.7.3"
     - "@uniswap/v3-periphery/contracts=UniswapV3Periphery/v0.8"
     - "@uniswap/v3-core/contracts=UniswapV3Core/v0.8"
-    - "@uniswap/v2-core/contracts=UniswapV2Core"
+    - "@uniswap/v2-core/contracts=UniswapV2Core/master"
