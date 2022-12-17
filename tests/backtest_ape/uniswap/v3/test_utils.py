@@ -89,8 +89,7 @@ def test_setup(acc):
     assert mocks["factory"].feeAmountTickSpacing(3000) == 60
     assert mocks["manager"].factory() == mocks["factory"].address
     assert mocks["pool"].fee() == 3000
-    assert mocks["factory"].getPool(
-        mocks["weth"].address,
-        mocks["token"].address,
-        3000
-    ) == mocks["pool"].address
+    assert (
+        mocks["factory"].getPool(mocks["weth"].address, mocks["token"].address, 3000)
+        == mocks["pool"].address
+    )
