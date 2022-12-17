@@ -1,6 +1,6 @@
 import click
 
-from ape import accounts
+# TODO: from ape import accounts
 
 
 def main():
@@ -9,7 +9,7 @@ def main():
     given a historical (or generated) price path.
     """
     # fake account to use for deployments
-    acc = accounts.test_accounts[0]
+    # TODO: acc = accounts.test_accounts[0]
 
     # TODO: deploy mock ERC20 tokens needed for pool
     click.echo("Deploying mock tokens ...")

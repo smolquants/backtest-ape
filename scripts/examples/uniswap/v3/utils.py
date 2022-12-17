@@ -6,11 +6,7 @@ from ape.api.accounts import AccountAPI
 from typing import Mapping
 
 
-def deploy_mock_erc20(
-    name: str,
-    symbol: str,
-    acc: AccountAPI
-) -> ContractInstance:
+def deploy_mock_erc20(name: str, symbol: str, acc: AccountAPI) -> ContractInstance:
     """
     Deploys mock ERC20 token.
 
@@ -31,9 +27,7 @@ def deploy_mock_univ3_factory(acc: AccountAPI) -> ContractInstance:
 
 
 def deploy_mock_position_manager(
-    factory: ContractInstance,
-    weth: ContractInstance,
-    acc: AccountAPI
+    factory: ContractInstance, weth: ContractInstance, acc: AccountAPI
 ) -> ContractInstance:
     """
     Deploys mock NFT position manager.
@@ -42,9 +36,7 @@ def deploy_mock_position_manager(
         :class:`ape.contracts.ContractInstance`
     """
     return project.MockNonfungiblePositionManager.deploy(
-        factory.address,
-        weth.address,
-        sender=acc
+        factory.address, weth.address, sender=acc
     )
 
 
@@ -53,14 +45,9 @@ def create_mock_pool(
     tokenA: ContractInstance,
     tokenB: ContractInstance,
     fee: int,
-    acc: AccountAPI
+    acc: AccountAPI,
 ) -> ContractInstance:
-    receipt = factory.createMockPool(
-        tokenA.address,
-        tokenB.address,
-        fee,
-        sender=acc
-    )
+    receipt = factory.createMockPool(tokenA.address, tokenB.address, fee, sender=acc)
     pool_addr = receipt.return_value
     return project.MockUniswapV3Pool.at(pool_addr)
 
