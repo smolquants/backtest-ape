@@ -70,3 +70,21 @@ def test_create_mock_pool(acc, fee):
     assert slot0.observationCardinalityNext == 1
     assert slot0.feeProtocol == 0
     assert slot0.unlocked is True
+
+
+def test_setup(acc):
+    mocks = utils.setup(acc)
+    assert set(mocks.keys()) == set(
+        [
+            "weth",
+            "token",
+            "factory",
+            "manager",
+            "pool",
+        ]
+    )
+    assert mocks["weth"].symbol() == "WETH"
+    assert mocks["token"].symbol() == "MOK"
+    assert mocks["factory"].feeAmountTickSpacing(3000) == 60
+    assert mocks["manager"].factory() == mocks["factory"].address
+    assert mocks["pool"].fee() == 3000

@@ -86,12 +86,20 @@ def setup(acc: AccountAPI) -> Mapping[str, ContractInstance]:
 
     # create the pool through the mock univ3 factory
     fee = 3000  # default fee of 0.3%
-    mock_pool = create_mock_pool(mock_factory, mock_weth, mock_token, fee, acc)
+    price = 1000000000000000000  # 1 wad
+    mock_pool = create_mock_pool(
+        mock_factory,
+        mock_weth,
+        mock_token,
+        fee,
+        price,
+        acc,
+    )
 
     return {
-        "mock_weth": mock_weth,
-        "mock_token": mock_token,
-        "mock_factory": mock_factory,
-        "mock_manager": mock_manager,
-        "mock_pool": mock_pool,
+        "weth": mock_weth,
+        "token": mock_token,
+        "factory": mock_factory,
+        "manager": mock_manager,
+        "pool": mock_pool,
     }
