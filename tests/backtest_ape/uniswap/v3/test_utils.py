@@ -15,3 +15,12 @@ def test_deploy_mock_erc20(acc):
     # try burning
     tok.burn(acc.address, 100, sender=acc)
     assert tok.balanceOf(acc) == 900
+
+
+def test_deploy_mock_univ3_factory(acc):
+    factory = utils.deploy_mock_univ3_factory(acc)
+    assert type(factory) == ContractInstance
+    assert factory.owner() == acc.address
+    assert factory.feeAmountTickSpacing(500) == 10
+    assert factory.feeAmountTickSpacing(3000) == 60
+    assert factory.feeAmountTickSpacing(10000) == 200

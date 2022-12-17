@@ -23,7 +23,8 @@ def deploy_mock_univ3_factory(acc: AccountAPI) -> ContractInstance:
     Returns:
         :class:`ape.contracts.ContractInstance`
     """
-    return project.MockUniswapV3Factory.deploy(sender=acc)
+    deployer = project.MockUniswapV3PoolDeployer.deploy(sender=acc)
+    return project.MockUniswapV3Factory.deploy(deployer.address, sender=acc)
 
 
 def deploy_mock_position_manager(
