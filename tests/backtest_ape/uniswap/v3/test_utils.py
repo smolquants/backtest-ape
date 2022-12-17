@@ -53,6 +53,7 @@ def test_create_mock_pool(acc, fee):
     assert pool.factory() == factory.address
     assert pool.fee() == fee
     assert pool.tickSpacing() == factory.feeAmountTickSpacing(fee)
+    assert factory.getPool(tokenA.address, tokenB.address, fee) == pool.address
 
     token0 = pool.token0()
     token1 = pool.token1()
@@ -88,3 +89,8 @@ def test_setup(acc):
     assert mocks["factory"].feeAmountTickSpacing(3000) == 60
     assert mocks["manager"].factory() == mocks["factory"].address
     assert mocks["pool"].fee() == 3000
+    assert mocks["factory"].getPool(
+        mocks["weth"].address,
+        mocks["token"].address,
+        3000
+    ) == mocks["pool"].address
