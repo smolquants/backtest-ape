@@ -46,11 +46,17 @@ def create_mock_pool(
     tokenA: ContractInstance,
     tokenB: ContractInstance,
     fee: int,
+    price: int,
     acc: AccountAPI,
 ) -> ContractInstance:
-    receipt = factory.createMockPool(tokenA.address, tokenB.address, fee, sender=acc)
+    receipt = factory.createPool(tokenA.address, tokenB.address, fee, sender=acc)
     pool_addr = receipt.return_value
-    return project.MockUniswapV3Pool.at(pool_addr)
+    pool = project.MockUniswapV3Pool.at(pool_addr)
+
+    # initialize the pool prior to returning
+    sqrt_price_x96 = int((price) ** (1 / 2)) << 96
+    pool.initialize(sqrt_price_x96, sender=acc)
+    return pool
 
 
 def setup(acc: AccountAPI) -> Mapping[str, ContractInstance]:
@@ -66,7 +72,7 @@ def setup(acc: AccountAPI) -> Mapping[str, ContractInstance]:
     """
     # deploy the mock erc20s
     click.echo("Deploying mock ERC20 tokens ...")
-    mock_weth = deploy_mock_erc20("Wrapped Ether", "WETH", acc)
+    mock_weth = deploy_mock_erc20("WETH9", "WETH", acc)
     mock_token = deploy_mock_erc20("Mock ERC20", "MOK", acc)
 
     # deploy the mock univ3 factory

@@ -5,7 +5,7 @@ import {IMockUniswapV3PoolDeployer} from "../interfaces/IMockUniswapV3PoolDeploy
 
 /// @dev DO NOT ACTUALLY DEPLOY
 /// @dev See https://github.com/Uniswap/v3-core/blob/0.8/contracts/UniswapV3Factory.sol
-contract MockUniswapV3Factory {    
+contract MockUniswapV3Factory {
     address public owner;
     IMockUniswapV3PoolDeployer public deployer;
     mapping(uint24 => int24) public feeAmountTickSpacing;
@@ -14,7 +14,7 @@ contract MockUniswapV3Factory {
     constructor(address _deployer) {
         // deployer separated out for contract size issues
         deployer = IMockUniswapV3PoolDeployer(_deployer);
-    
+
         // orig v3 params
         owner = msg.sender;
         feeAmountTickSpacing[500] = 10;

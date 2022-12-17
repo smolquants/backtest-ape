@@ -14,7 +14,7 @@ contract MockUniswapV3Pool is UniswapV3Pool, Setter {
         _slot0.sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
         slot0 = _slot0;
     }
-    
+
     function setLiquidity(uint128 _liquidity) external {
         liquidity = _liquidity;
     }

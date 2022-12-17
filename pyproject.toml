@@ -23,6 +23,10 @@ classifiers = [
 ]
 dependencies = [
   "eth-ape>=0.5.2,<0.6.0",
+  "pandas",
+  "scipy",
+  "numpy>=1.21,<2.0",
+  "hypothesis>=6.2.0,<7.0",  # Strategy-based fuzzer
 ]
 dynamic = ["version"]
 
