@@ -3,7 +3,7 @@ pragma solidity 0.8.12;
 
 import {UniswapV3Pool} from "@uniswap/v3-core/contracts/UniswapV3Pool.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-import {Setter} from "../../../../Setter.sol";
+import {Setter} from "../../../Setter.sol";
 
 /// @dev DO NOT ACTUALLY DEPLOY
 /// @dev See: https://github.com/Uniswap/v3-core/blob/0.8/contracts/UniswapV3Pool.sol
