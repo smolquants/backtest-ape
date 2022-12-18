@@ -3,11 +3,16 @@ import pytest
 import numpy as np
 
 from ape.contracts import ContractInstance
-from backtest_ape.uniswap.v3 import utils
+from backtest_ape.uniswap.v3.setup import (
+    deploy_mock_erc20,
+    deploy_mock_position_manager,
+    deploy_mock_univ3_factory,
+    create_mock_pool,
+)
 
 
 def test_deploy_mock_erc20(acc):
-    tok = utils.deploy_mock_erc20("Mock Token", "MOK", acc)
+    tok = deploy_mock_erc20("Mock Token", "MOK", acc)
     assert type(tok) == ContractInstance
     assert tok.name() == "Mock Token"
     assert tok.symbol() == "MOK"
@@ -22,7 +27,7 @@ def test_deploy_mock_erc20(acc):
 
 
 def test_deploy_mock_univ3_factory(acc):
-    factory = utils.deploy_mock_univ3_factory(acc)
+    factory = deploy_mock_univ3_factory(acc)
     assert type(factory) == ContractInstance
     assert factory.owner() == acc.address
     assert factory.feeAmountTickSpacing(500) == 10
@@ -31,9 +36,9 @@ def test_deploy_mock_univ3_factory(acc):
 
 
 def test_deploy_mock_position_manager(acc):
-    factory = utils.deploy_mock_univ3_factory(acc)
-    weth = utils.deploy_mock_erc20("WETH9", "WETH", acc)
-    manager = utils.deploy_mock_position_manager(factory, weth, acc)
+    factory = deploy_mock_univ3_factory(acc)
+    weth = deploy_mock_erc20("WETH9", "WETH", acc)
+    manager = deploy_mock_position_manager(factory, weth, acc)
     assert type(manager) == ContractInstance
     assert manager.factory() == factory.address
     assert manager.WETH9() == weth.address
@@ -44,12 +49,12 @@ def test_deploy_mock_position_manager(acc):
 
 @pytest.mark.parametrize("fee", [500, 3000, 10000])
 def test_create_mock_pool(acc, fee):
-    factory = utils.deploy_mock_univ3_factory(acc)
-    tokenA = utils.deploy_mock_erc20("Token A", "TOKA", acc)
-    tokenB = utils.deploy_mock_erc20("Token B", "TOKB", acc)
+    factory = deploy_mock_univ3_factory(acc)
+    tokenA = deploy_mock_erc20("Token A", "TOKA", acc)
+    tokenB = deploy_mock_erc20("Token B", "TOKB", acc)
     price = 1000000000000000000  # 1 wad
 
-    pool = utils.create_mock_pool(factory, tokenA, tokenB, fee, price, acc)
+    pool = create_mock_pool(factory, tokenA, tokenB, fee, price, acc)
     assert pool.factory() == factory.address
     assert pool.fee() == fee
     assert pool.tickSpacing() == factory.feeAmountTickSpacing(fee)
@@ -71,25 +76,3 @@ def test_create_mock_pool(acc, fee):
     assert slot0.observationCardinalityNext == 1
     assert slot0.feeProtocol == 0
     assert slot0.unlocked is True
-
-
-def test_setup(acc):
-    mocks = utils.setup(acc)
-    assert set(mocks.keys()) == set(
-        [
-            "weth",
-            "token",
-            "factory",
-            "manager",
-            "pool",
-        ]
-    )
-    assert mocks["weth"].symbol() == "WETH"
-    assert mocks["token"].symbol() == "MOK"
-    assert mocks["factory"].feeAmountTickSpacing(3000) == 60
-    assert mocks["manager"].factory() == mocks["factory"].address
-    assert mocks["pool"].fee() == 3000
-    assert (
-        mocks["factory"].getPool(mocks["weth"].address, mocks["token"].address, 3000)
-        == mocks["pool"].address
-    )
