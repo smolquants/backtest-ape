@@ -18,9 +18,10 @@ class BaseUniswapV3Runner(BaseRunner):
 
         Deploys mock ERC20 tokens needed for pool, mock Uniswap V3 factory
         and mock Uniswap V3 position manager. Deploys the mock pool
-        through the factory. Then returns the NFT position manager instance.
+        through the factory.
         """
         acc = get_test_account()
+        self._acc = acc
 
         # deploy the mock erc20s
         click.echo("Deploying mock ERC20 tokens ...")
@@ -55,4 +56,3 @@ class BaseUniswapV3Runner(BaseRunner):
             "manager": mock_manager,
             "pool": mock_pool,
         }
-        self._initialized = True

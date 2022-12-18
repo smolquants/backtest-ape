@@ -8,9 +8,9 @@ def runner():
     return BaseUniswapV3Runner()
 
 
-def test_setup(runner):
+def test_setup(runner, acc):
     runner.setup()
-    assert runner._initialized is True
+    assert runner._acc == acc
 
     mocks = runner._mocks
     assert set(mocks.keys()) == set(
