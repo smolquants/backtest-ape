@@ -23,7 +23,7 @@ class BaseRunner(BaseModel):
         """
         # TODO: test
         super().__init__(**data)
-        self._refs = {k: Contract(ref_addr) for k, ref_addr in self.ref_addrs}
+        self._refs = {k: Contract(ref_addr) for k, ref_addr in self.ref_addrs.items()}
 
     class Config:
         underscore_attrs_are_private = True

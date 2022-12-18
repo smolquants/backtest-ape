@@ -23,9 +23,9 @@ def main():
         raise ValueError("not connected to mainnet-fork.")
 
     # prompt user which backtest runner to use
-    runner_cls_name = click.prompt("Runner type", type=click.Choice(
-        backtest_ape.__all__, case_sensitive=False
-    ))
+    runner_cls_name = click.prompt(
+        "Runner type", type=click.Choice(backtest_ape.__all__, case_sensitive=False)
+    )
     runner_cls = getattr(backtest_ape, runner_cls_name)
 
     # prompt user for fields on runner to init with
@@ -51,7 +51,10 @@ def main():
     # run backtest
     # TODO: choice for back or forward testing
     start = click.prompt("Start block number", type=int)
-    stop = click.prompt("Stop block number", type=int, default=None)
+    stop = click.prompt("Stop block number", type=int, default=-1)
+    if stop < 0:
+        stop = None
+
     df = runner.backtest(start, stop)
 
     # save df results to csv
