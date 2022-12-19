@@ -87,3 +87,11 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
             ).data,
         ]
         mock_pool.calls(datas)
+
+    def update_strategy(self):
+        """
+        Updates the strategy being backtested through backtester contract.
+
+        NOTE: Passing means passive LP.
+        """
+        pass

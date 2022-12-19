@@ -55,6 +55,12 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("set_mocks_state not implemented.")
 
+    def update_strategy(self):
+        """
+        Updates the strategy being backtested through backtester contract.
+        """
+        raise NotImplementedError("update_strategy not implemented.")
+
     def backtest(
         self,
         start: int,
@@ -90,6 +96,9 @@ class BaseRunner(BaseModel):
 
             # set the state of mocks to refs state for vars
             self.set_mocks_state(refs_state)
+
+            # update backtested strategy based off new mock state, if needed
+            self.update_strategy()
 
             # record value function on backtester
             value = self._backtester.value()
