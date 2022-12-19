@@ -1,6 +1,7 @@
+import click
 import pandas as pd
 
-from ape import Contract
+from ape import Contract, chain
 from ape.contracts import ContractInstance
 from ape.api.accounts import AccountAPI
 from pydantic import BaseModel
@@ -33,6 +34,27 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("setup not implemented.")
 
+    def get_refs_state(self, number: int) -> Mapping:
+        """
+        Gets the state of references at given block.
+
+        Args:
+            number (int): The block number to reference.
+
+        Returns:
+            Mapping: The state of references at block.
+        """
+        raise NotImplementedError("get_refs_state not implemented.")
+
+    def set_mocks_state(self, state: Mapping):
+        """
+        Sets the state of mocks.
+
+        Args:
+            state (Mapping): The new state of mocks.
+        """
+        raise NotImplementedError("set_mocks_state not implemented.")
+
     def backtest(
         self,
         start: int,
@@ -48,7 +70,38 @@ class BaseRunner(BaseModel):
         Returns:
             :class:`pandas.DataFrame`: The generated backtester values.
         """
-        raise NotImplementedError("backtest not implemented.")
+        if not self._initialized:
+            raise Exception("runner not setup.")
+
+        if stop is None:
+            stop = chain.blocks.head.number
+
+        if start > stop:
+            raise ValueError("start block after stop block.")
+
+        click.echo(f"Iterating from block number {start} to {stop} ...")
+        values = []
+        for number in range(start, stop, 1):
+            click.echo(f"Processing block {number} ...")
+
+            # get the state of refs for vars care about at block.number
+            refs_state = self.get_refs_state(number)
+            click.echo(f"State of refs at block {number}: {refs_state}")
+
+            # set the state of mocks to refs state for vars
+            self.set_mocks_state(refs_state)
+
+            # record value function on backtester
+            value = self._backtester.value()
+            values.append(value)
+            click.echo(f"Backtester value at block {number}: {value}")
+
+        return pd.DataFrame(
+            data={
+                "number": [number for number in range(start, stop, 1)],
+                "value": values,
+            }
+        )
 
     def forwardtest(self, data: pd.DataFrame) -> pd.DataFrame:
         """

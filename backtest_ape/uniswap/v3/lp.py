@@ -1,9 +1,6 @@
-import click
-import pandas as pd
-
-from ape import chain, project
+from ape import project
 from backtest_ape.uniswap.v3.base import BaseUniswapV3Runner
-from typing import Optional
+from typing import Mapping
 
 
 class UniswapV3LPRunner(BaseUniswapV3Runner):
@@ -34,93 +31,59 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
 
         self._initialized = True
 
-    def backtest(
-        self,
-        start: int,
-        stop: Optional[int] = None,
-    ) -> pd.DataFrame:
+    def get_refs_state(self, number: int) -> Mapping:
         """
-        Backtests Uniswap V3 LP strategy between start and stop blocks.
+        Gets the state of references at given block.
 
         Args:
-            start (int): The start block number.
-            stop (Optional[int]): Then stop block number.
+            block_number (int): The block number to reference.
 
         Returns:
-            :class:`pandas.DataFrame`: The generated backtester values.
+            Mapping: The state of references at block.
         """
-        if not self._initialized:
-            raise Exception("runner not setup.")
+        ref_pool = self._refs["pool"]
+        state = {}
 
-        if stop is None:
-            stop = chain.blocks.head.number
-
-        if start > stop:
-            raise ValueError("start block after stop block.")
-
-        click.echo(f"Iterating from block number {start} to {stop} ...")
-        values = []
-        for number in range(start, stop, 1):
-            click.echo(f"Processing block {number} ...")
-
-            # get the state of ref pool for vars care about at block.number
-            ref_pool = self._refs["pool"]
-            slot0 = ref_pool.slot0(block_identifier=number)
-            liquidity = ref_pool.liquidity(block_identifier=number)
-            fee_growth_global0_x128 = ref_pool.feeGrowthGlobal0X128(
-                block_identifier=number
-            )
-            fee_growth_global1_x128 = ref_pool.feeGrowthGlobal1X128(
-                block_identifier=number
-            )
-            tick_info_lower = ref_pool.ticks(self.tick_lower, block_identifier=number)
-            tick_info_upper = ref_pool.ticks(self.tick_upper, block_identifier=number)
-
-            # set the mock state to ref pool state for vars
-            mock_pool = self._mocks["pool"]
-            datas = [
-                mock_pool.setTick.as_transaction(slot0.tick).data,
-                mock_pool.setLiquidity.as_transaction(liquidity).data,
-                mock_pool.setFeeGrowthGlobalX128.as_transaction(
-                    fee_growth_global0_x128, fee_growth_global1_x128
-                ).data,
-                mock_pool.setFeeGrowthOutsideX128.as_transaction(
-                    self.tick_lower,
-                    tick_info_lower.feeGrowthOutside0X128,
-                    tick_info_lower.feeGrowthOutside1X128,
-                ).data,
-                mock_pool.setFeeGrowthOutsideX128.as_transaction(
-                    self.tick_upper,
-                    tick_info_upper.feeGrowthOutside0X128,
-                    tick_info_upper.feeGrowthOutside1X128,
-                ).data,
-            ]
-            mock_pool.calls(datas)
-
-            # record value function on backtester
-            value = self._backtester.value()
-            values.append(value)
-
-        return pd.DataFrame(
-            data={
-                "number": [number for number in range(start, stop, 1)],
-                "value": values,
-            }
+        state["slot0"] = ref_pool.slot0(block_identifier=number)
+        state["liquidity"] = ref_pool.liquidity(block_identifier=number)
+        state["fee_growth_global0_x128"] = ref_pool.feeGrowthGlobal0X128(
+            block_identifier=number
+        )
+        state["fee_growth_global1_x128"] = ref_pool.feeGrowthGlobal1X128(
+            block_identifier=number
+        )
+        state["tick_info_lower"] = ref_pool.ticks(
+            self.tick_lower, block_identifier=number
+        )
+        state["tick_info_upper"] = ref_pool.ticks(
+            self.tick_upper, block_identifier=number
         )
 
-    def forwardtest(self, data: pd.DataFrame) -> pd.DataFrame:
+        return state
+
+    def set_mocks_state(self, state: Mapping):
         """
-        Forwardtests strategy against Monte Carlo simulated data.
+        Sets the state of mocks.
 
         Args:
-            data (:class:`pd.DataFrame`):
-                Historical data to generate Monte Carlo sims from.
-
-        Returns:
-            :class:`pandas.DataFrame`: The generated backtester values.
+            state (Mapping): The new state of mocks.
         """
-        if not self._initialized:
-            raise Exception("runner not setup.")
-
-        # TODO: implement
-        return pd.DataFrame()
+        mock_pool = self._mocks["pool"]
+        datas = [
+            mock_pool.setTick.as_transaction(state["slot0"].tick).data,
+            mock_pool.setLiquidity.as_transaction(state["liquidity"]).data,
+            mock_pool.setFeeGrowthGlobalX128.as_transaction(
+                state["fee_growth_global0_x128"], state["fee_growth_global1_x128"]
+            ).data,
+            mock_pool.setFeeGrowthOutsideX128.as_transaction(
+                self.tick_lower,
+                state["tick_info_lower"].feeGrowthOutside0X128,
+                state["tick_info_lower"].feeGrowthOutside1X128,
+            ).data,
+            mock_pool.setFeeGrowthOutsideX128.as_transaction(
+                self.tick_upper,
+                state["tick_info_upper"].feeGrowthOutside0X128,
+                state["tick_info_upper"].feeGrowthOutside1X128,
+            ).data,
+        ]
+        mock_pool.calls(datas)
