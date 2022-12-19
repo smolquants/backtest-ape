@@ -21,7 +21,6 @@ class BaseRunner(BaseModel):
         Overrides BaseModel init to initialize and store the ape Contract
         instances of reference addresses.
         """
-        # TODO: test
         super().__init__(**data)
         self._refs = {k: Contract(ref_addr) for k, ref_addr in self.ref_addrs.items()}
 

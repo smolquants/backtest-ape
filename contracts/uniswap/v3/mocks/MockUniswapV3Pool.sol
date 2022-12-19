@@ -9,21 +9,25 @@ import {Setter} from "../../../Setter.sol";
 /// @dev See: https://github.com/Uniswap/v3-core/blob/0.8/contracts/UniswapV3Pool.sol
 contract MockUniswapV3Pool is UniswapV3Pool, Setter {
     function setTick(int24 _tick) external {
-        Slot0 memory _slot0 = slot0;
-        _slot0.tick = _tick;
-        _slot0.sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
-        slot0 = _slot0;
+        slot0.tick = _tick;
+        slot0.sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
     }
 
     function setLiquidity(uint128 _liquidity) external {
         liquidity = _liquidity;
     }
 
-    function setFeeGrowthGlobal0X128(uint256 _feeGrowthGlobal0X128) external {
+    function setFeeGrowthGlobalX128(uint256 _feeGrowthGlobal0X128, uint256 _feeGrowthGlobal1X128) external {
         feeGrowthGlobal0X128 = _feeGrowthGlobal0X128;
+        feeGrowthGlobal1X128 = _feeGrowthGlobal1X128;
     }
 
-    function setFeeGrowthGlobal1X128(uint256 _feeGrowthGlobal1X128) external {
-        feeGrowthGlobal1X128 = _feeGrowthGlobal1X128;
+    function setFeeGrowthOutsideX128(
+        int24 _tick,
+        uint256 _feeGrowthOutside0X128,
+        uint256 _feeGrowthOutside1X128
+    ) external {
+        ticks[_tick].feeGrowthOutside0X128 = _feeGrowthOutside0X128;
+        ticks[_tick].feeGrowthOutside1X128 = _feeGrowthOutside1X128;
     }
 }
