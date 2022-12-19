@@ -67,10 +67,14 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
             ref_pool = self._refs["pool"]
             slot0 = ref_pool.slot0(block_identifier=number)
             liquidity = ref_pool.liquidity(block_identifier=number)
-            fee_growth_global0_x128 = ref_pool.feeGrowthGlobal0X128(block_identifier=number)
-            fee_growth_global1_x128 = ref_pool.feeGrowthGlobal1X128(block_identifier=number)
-            tick_info_lower = ref_pool.ticks(self.tick_lower)
-            tick_info_upper = ref_pool.ticks(self.tick_upper)
+            fee_growth_global0_x128 = ref_pool.feeGrowthGlobal0X128(
+                block_identifier=number
+            )
+            fee_growth_global1_x128 = ref_pool.feeGrowthGlobal1X128(
+                block_identifier=number
+            )
+            tick_info_lower = ref_pool.ticks(self.tick_lower, block_identifier=number)
+            tick_info_upper = ref_pool.ticks(self.tick_upper, block_identifier=number)
 
             # set the mock state to ref pool state for vars
             mock_pool = self._mocks["pool"]
@@ -78,18 +82,17 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
                 mock_pool.setTick.as_transaction(slot0.tick).data,
                 mock_pool.setLiquidity.as_transaction(liquidity).data,
                 mock_pool.setFeeGrowthGlobalX128.as_transaction(
-                    fee_growth_global0_x128,
-                    fee_growth_global1_x128
+                    fee_growth_global0_x128, fee_growth_global1_x128
                 ).data,
                 mock_pool.setFeeGrowthOutsideX128.as_transaction(
                     self.tick_lower,
                     tick_info_lower.feeGrowthOutside0X128,
-                    tick_info_lower.feeGrowthOutside1X128
+                    tick_info_lower.feeGrowthOutside1X128,
                 ).data,
                 mock_pool.setFeeGrowthOutsideX128.as_transaction(
                     self.tick_upper,
                     tick_info_upper.feeGrowthOutside0X128,
-                    tick_info_upper.feeGrowthOutside1X128
+                    tick_info_upper.feeGrowthOutside1X128,
                 ).data,
             ]
             mock_pool.calls(datas)
@@ -98,10 +101,12 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
             value = self._backtester.value()
             values.append(value)
 
-        return pd.DataFrame(data={
-            "number": [number for number in range(start, stop, 1)],
-            "value": values
-        })
+        return pd.DataFrame(
+            data={
+                "number": [number for number in range(start, stop, 1)],
+                "value": values,
+            }
+        )
 
     def forwardtest(self, data: pd.DataFrame) -> pd.DataFrame:
         """
