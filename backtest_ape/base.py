@@ -70,6 +70,23 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("update_strategy not implemented.")
 
+    def record(
+        self, df: pd.DataFrame, number: int, state: Mapping, value: int
+    ) -> pd.DataFrame:
+        """
+        Records the value and possibly some state at the given block.
+
+        Args:
+            df (:class:`pd.DataFrame`): The dataframe to record in.
+            number (int): The block number.
+            state (Mapping): The state of references at block number.
+            value (int): The value of the backtester for the state.
+
+        Returns:
+            :class:`pd.DataFrame`: The updated dataframe with the new record.
+        """
+        raise NotImplementedError("record not implemented.")
+
     def backtest(
         self,
         start: int,
@@ -98,7 +115,7 @@ class BaseRunner(BaseModel):
         self.init_mocks_state(self.get_refs_state(start))
 
         click.echo(f"Iterating from block number {start+1} to {stop} ...")
-        values = []
+        df = pd.DataFrame()
         for number in range(start + 1, stop, 1):
             click.echo(f"Processing block {number} ...")
 
@@ -112,17 +129,12 @@ class BaseRunner(BaseModel):
             # update backtested strategy based off new mock state, if needed
             self.update_strategy()
 
-            # record value function on backtester
+            # record value function on backtester and any additional state
             value = self._backtester.value()
-            values.append(value)
             click.echo(f"Backtester value at block {number}: {value}")
+            df = self.record(df, number, refs_state, value)
 
-        return pd.DataFrame(
-            data={
-                "number": [number for number in range(start, stop, 1)],
-                "value": values,
-            }
-        )
+        return df
 
     def forwardtest(self, data: pd.DataFrame) -> pd.DataFrame:
         """
