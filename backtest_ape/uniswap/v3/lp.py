@@ -1,4 +1,4 @@
-from ape import project
+from ape import chain, project
 from backtest_ape.uniswap.v3.base import BaseUniswapV3Runner
 from typing import Mapping
 
@@ -6,7 +6,8 @@ from typing import Mapping
 class UniswapV3LPRunner(BaseUniswapV3Runner):
     tick_lower: int
     tick_upper: int
-    amount: int
+    amount_weth: int
+    amount_token: int
 
     def setup(self):
         """
@@ -25,10 +26,6 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         self._backtester = project.UniswapV3LPBacktest.deploy(
             manager.address, sender=self._acc
         )
-
-        # TODO: mint both tokens to acc, approve manager to transfer,
-        # TODO: then mint LP position
-
         self._initialized = True
 
     def get_refs_state(self, number: int) -> Mapping:
@@ -58,8 +55,69 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         state["tick_info_upper"] = ref_pool.ticks(
             self.tick_upper, block_identifier=number
         )
-
         return state
+
+    def init_mocks_state(self, state: Mapping):
+        """
+        Initializes the state of mocks.
+
+        Args:
+            state (Mapping): The init state of mocks.
+        """
+        mock_weth = self._mocks["weth"]
+        mock_token = self._mocks["token"]
+        mock_manager = self._mocks["manager"]
+        mock_pool = self._mocks["pool"]
+
+        # set the tick first for position manager add liquidity to work properly
+        mock_pool.setTick(state["slot0"].tick)
+
+        # mint both tokens to backtester, approve manager to transfer,
+        # then mint LP position
+        mint_params = {
+            "token0": mock_weth.address,
+            "token1": mock_token.address,
+            "fee": 3000,
+            "tickLower": self.tick_lower,
+            "tickUpper": self.tick_upper,
+            "amount0Desired": self.amount_weth,
+            "amount1Desired": self.amount_token,
+            "amount0Min": 0,
+            "amount1Min": 0,
+            "recipient": self._backtester.address,
+            "deadline": chain.blocks.head.timestamp + 86400,
+        }
+        targets = [
+            mock_weth.address,
+            mock_token.address,
+            mock_weth.address,
+            mock_token.address,
+            mock_manager.address,
+        ]
+        datas = [
+            mock_weth.mint.as_transaction(
+                self._backtester.address, self.amount_weth
+            ).data,
+            mock_token.mint.as_transaction(
+                self._backtester.address, self.amount_token
+            ).data,
+            mock_weth.approve.as_transaction(
+                mock_manager.address, self.amount_weth
+            ).data,
+            mock_token.approve.as_transaction(
+                mock_manager.address, self.amount_token
+            ).data,
+            mock_manager.mint.as_transaction(mint_params).data,
+        ]
+        values = [0, 0, 0, 0, 0]
+        receipt = self._backtester.multicall(targets, datas, values, sender=self._acc)
+        token_id = int(receipt.return_value[-1])  # TODO: check
+
+        # store token id in backtester
+        self._backtester.push(token_id, sender=self._acc)
+
+        # set the mock state
+        self.set_mock_state(state)
 
     def set_mocks_state(self, state: Mapping):
         """
