@@ -46,6 +46,12 @@ def create_mock_pool(
     price: int,
     acc: AccountAPI,
 ) -> ContractInstance:
+    """
+    Creates mock Uniswap V3 pool through factory.
+
+    Returns:
+        :class:`ape.contracts.ContractInstance`
+    """
     receipt = factory.createPool(tokenA.address, tokenB.address, fee, sender=acc)
     pool_addr = receipt.return_value
     pool = project.MockUniswapV3Pool.at(pool_addr)

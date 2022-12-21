@@ -9,8 +9,8 @@ from typing import Mapping
 class UniswapV3LPRunner(BaseUniswapV3Runner):
     tick_lower: int
     tick_upper: int
-    amount_weth: int
-    amount_token: int
+    amount_tokenA: int
+    amount_tokenB: int
 
     def setup(self):
         """
@@ -67,8 +67,8 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         Args:
             state (Mapping): The init state of mocks.
         """
-        mock_weth = self._mocks["weth"]
-        mock_token = self._mocks["token"]
+        mock_tokenA = self._mocks["tokenA"]
+        mock_tokenB = self._mocks["tokenB"]
         mock_manager = self._mocks["manager"]
         mock_pool = self._mocks["pool"]
         ecosystem = chain.provider.network.ecosystem
@@ -78,33 +78,33 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
 
         # mint both tokens to backtester, approve manager to transfer,
         targets = [
-            mock_weth.address,
-            mock_token.address,
-            mock_weth.address,
-            mock_token.address,
+            mock_tokenA.address,
+            mock_tokenB.address,
+            mock_tokenA.address,
+            mock_tokenB.address,
         ]
         datas = [
             ecosystem.encode_transaction(
-                mock_weth.address,
-                mock_weth.mint.abis[0],
+                mock_tokenA.address,
+                mock_tokenA.mint.abis[0],
                 self._backtester.address,
                 self.amount_weth,
             ).data,
             ecosystem.encode_transaction(
-                mock_token.address,
-                mock_token.mint.abis[0],
+                mock_tokenB.address,
+                mock_tokenB.mint.abis[0],
                 self._backtester.address,
                 self.amount_token,
             ).data,
             ecosystem.encode_transaction(
-                mock_weth.address,
-                mock_weth.approve.abis[0],
+                mock_tokenA.address,
+                mock_tokenA.approve.abis[0],
                 mock_manager.address,
                 2**256 - 1,
             ).data,
             ecosystem.encode_transaction(
-                mock_token.address,
-                mock_token.approve.abis[0],
+                mock_tokenB.address,
+                mock_tokenB.approve.abis[0],
                 mock_manager.address,
                 2**256 - 1,
             ).data,
@@ -113,14 +113,20 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         self._backtester.multicall(targets, datas, values, sender=self._acc)
 
         # then mint the LP position
+        is_a_zero = mock_pool.token0() == mock_tokenA.address
+        mock_token0 = mock_tokenA if is_a_zero else mock_tokenB
+        mock_token1 = mock_tokenB if is_a_zero else mock_tokenA
+        mock_pool_fee = mock_pool.fee()
+        amount_token0 = self.amount_tokenA if is_a_zero else self.amount_tokenB
+        amount_token1 = self.amount_tokenB if is_a_zero else self.amount_tokenA
         mint_params = (
-            mock_weth.address,
-            mock_token.address,
-            3000,
+            mock_token0.address,
+            mock_token1.address,
+            mock_pool_fee,
             self.tick_lower,
             self.tick_upper,
-            self.amount_weth,
-            self.amount_token,
+            amount_token0,
+            amount_token1,
             0,
             0,
             self._backtester.address,
