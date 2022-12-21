@@ -2,16 +2,27 @@ import click
 
 from backtest_ape.base import BaseRunner
 from backtest_ape.utils import get_test_account
-
 from backtest_ape.uniswap.v3.setup import (
     deploy_mock_erc20,
     deploy_mock_position_manager,
     deploy_mock_univ3_factory,
     create_mock_pool,
 )
+from typing import Any
 
 
 class BaseUniswapV3Runner(BaseRunner):
+    def __init__(self, **data: Any):
+        """
+        Overrides BaseRunner init to check ref_addrs contains
+        pool and weth.
+        """
+        super().__init__(**data)
+        ks = ["pool"]
+        for k in ks:
+            if k not in self._refs.keys():
+                raise ValueError(f"ref_addrs does not contain key '{k}'.")
+
     def setup(self):
         """
         Sets up Uniswap V3 runner for testing.

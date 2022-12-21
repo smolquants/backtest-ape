@@ -5,7 +5,9 @@ from backtest_ape.uniswap.v3.base import BaseUniswapV3Runner
 
 @pytest.fixture
 def runner():
-    return BaseUniswapV3Runner()
+    return BaseUniswapV3Runner(
+        ref_addrs={"pool": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8"}
+    )
 
 
 def test_setup(runner, acc):
