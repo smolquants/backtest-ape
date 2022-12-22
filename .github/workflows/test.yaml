@@ -33,6 +33,12 @@ jobs:
     - name: Build with hatch
       run: hatch build
     
+    - name: Echo dependencies
+      run: hatch dep show table
+      
+    - name: Echo Ape version
+      run: hatch run ape --version
+    
     - name: Install Ape plugins
       run: hatch run ape plugins install . --yes
 
