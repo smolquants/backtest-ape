@@ -5,18 +5,19 @@ Backtesting and forward-testing (via Monte Carlo sims) for DeFi strategies.
 ## Installation
 
 ```sh
-pipx install eth-ape'[recommended-plugins]'
-ape plugins install .
+hatch build
+hatch shell
+(backtest-ape) $ ape plugins install .
 ```
 
 ## Build
 
 ```sh
-ape compile --size
+(backtest-ape) $ ape compile --size
 ```
 
 ## Test
 
 ```sh
-ape test -s
+(backtest-ape) $ ape test -s
 ```

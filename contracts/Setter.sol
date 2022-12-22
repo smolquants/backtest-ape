@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.0;
 
 /// @title Setter Wrapper
 /// @notice Abstract Setter wrapper to set public variables on mock versions of existing contracts
