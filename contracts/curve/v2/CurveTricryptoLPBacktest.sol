@@ -44,7 +44,7 @@ contract CurveTricryptoLPBacktest is Backtest {
 
             // convert values to USDT denom using oracle price
             uint256 price = pool.price_oracle(i - 1);
-            value_ += ((price * balance * 10 ** (decimals[0])) / (1e18 * 10 ** (decimals[i]))); // mulDiv and decimal conversion
+            value_ += ((price * balance * 10 ** decimals[0]) / (10 ** (18 + decimals[i]))); // mulDiv and decimal conversion
         }
     }
 }
