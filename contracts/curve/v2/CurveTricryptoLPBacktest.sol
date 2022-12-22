@@ -35,7 +35,7 @@ contract CurveTricryptoLPBacktest is Backtest {
         amount -= 1;
 
         // underlying token balances owned are pro-rata share w.r.t. lp amount of total tokens in pool
-        for (uint256 i = 0; i < 3; ++i) {
+        for (uint256 i = 0; i < numCoins; ++i) {
             uint256 balance = (pool.balances(i) * amount) / totalSupply;
             if (i == 0) {
                 value_ += balance;
