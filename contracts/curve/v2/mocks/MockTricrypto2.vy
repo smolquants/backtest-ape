@@ -252,9 +252,6 @@ def __default__():
     pass
 
 
-# TODO: inverse of _packed_view to get self.price_oracle_packed
-# TODO: from reference pool (to set in mock each block)
-
 @internal
 @view
 def _packed_view(k: uint256, p: uint256) -> uint256:
@@ -1157,13 +1154,17 @@ def set_D(_D: uint256):
     self.D = _D
 
 @external
-def set_price_oracle_packed(_price: uint256):
-    self.price_oracle_packed = _price
+def set_packed_prices(_prices: uint256[N_COINS-1]):
+    # NOTE: same as __init__ so might be wrong
+    packed_prices: uint256 = 0
+    for k in range(N_COINS-1):
+        packed_prices = shift(packed_prices, PRICE_SIZE)
+        p: uint256 = _prices[N_COINS-2 - k]  # / PRICE_PRECISION_MUL
+        assert p < PRICE_MASK
+        packed_prices = bitwise_or(p, packed_prices)
 
-@external
-def set_price_scale_packed(_price: uint256):
-    self.price_scale_packed = _price
+    self.price_scale_packed = packed_prices
+    self.price_oracle_packed = packed_prices
+    self.last_prices_packed = packed_prices
+    self.last_prices_timestamp = block.timestamp
 
-@external
-def set_last_prices_packed(_price: uint256):
-    self.last_prices_packed = _price
