@@ -108,13 +108,11 @@ A_MULTIPLIER: constant(uint256) = 10000
 
 # These addresses are replaced by the deployer
 math: constant(address) = 0x8F68f4810CcE3194B6cB6F3d50fa58c2c9bDD1d5
-token: constant(address) = 0xc4AD29ba4B3c580e6D59105FFf484999997675Ff
 views: constant(address) = 0x40745803C2faA8E8402E2Ae935933D07cA8f355c
-coins: constant(address[N_COINS]) = [
-    0xdAC17F958D2ee523a2206206994597C13D831ec7,
-    0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599,
-    0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2,
-]
+
+# Pool specific addresses
+token: public(address)
+coins: public(address[N_COINS])
 
 price_scale_packed: uint256   # Internal price scale
 price_oracle_packed: uint256  # Price target given by MA
@@ -198,6 +196,8 @@ INF_COINS: constant(uint256) = 15
 def __init__(
     owner: address,
     admin_fee_receiver: address,
+    coins: address[N_COINS],
+    token: address,
     A: uint256,
     gamma: uint256,
     mid_fee: uint256,
@@ -210,6 +210,10 @@ def __init__(
     initial_prices: uint256[N_COINS-1]
 ):
     self.owner = owner
+    
+    # set coin and token addresses
+    self.token = token
+    self.coins = coins
 
     # Pack A and gamma:
     # shifted A + gamma
@@ -266,18 +270,6 @@ def _packed_view(k: uint256, p: uint256) -> uint256:
 @view
 def price_oracle(k: uint256) -> uint256:
     return self._packed_view(k, self.price_oracle_packed)
-
-@external
-@view
-def token() -> address:
-    return token
-
-
-@external
-@view
-def coins(i: uint256) -> address:
-    _coins: address[N_COINS] = coins
-    return _coins[i]
 
 
 @internal
@@ -376,7 +368,7 @@ def get_xcp(D: uint256) -> uint256:
 @external
 @view
 def get_virtual_price() -> uint256:
-    return 10**18 * self.get_xcp(self.D) / CurveToken(token).totalSupply()
+    return 10**18 * self.get_xcp(self.D) / CurveToken(self.token).totalSupply()
 
 
 @internal
@@ -387,7 +379,7 @@ def _claim_admin_fees():
     xcp_profit_a: uint256 = self.xcp_profit_a
 
     # Gulp here
-    _coins: address[N_COINS] = coins
+    _coins: address[N_COINS] = self.coins
     for i in range(N_COINS):
         self.balances[i] = ERC20(_coins[i]).balanceOf(self)
 
@@ -398,12 +390,12 @@ def _claim_admin_fees():
         if fees > 0:
             receiver: address = self.admin_fee_receiver
             frac: uint256 = vprice * 10**18 / (vprice - fees) - 10**18
-            claimed: uint256 = CurveToken(token).mint_relative(receiver, frac)
+            claimed: uint256 = CurveToken(self.token).mint_relative(receiver, frac)
             xcp_profit -= fees*2
             self.xcp_profit = xcp_profit
             log ClaimAdminFee(receiver, claimed)
 
-    total_supply: uint256 = CurveToken(token).totalSupply()
+    total_supply: uint256 = CurveToken(self.token).totalSupply()
 
     # Recalculate D b/c we gulped
     D: uint256 = Math(math).newton_D(A_gamma[0], A_gamma[1], self.xp())
@@ -486,7 +478,7 @@ def tweak_price(A_gamma: uint256[2],
         packed_prices = bitwise_or(p, packed_prices)
     self.last_prices_packed = packed_prices
 
-    total_supply: uint256 = CurveToken(token).totalSupply()
+    total_supply: uint256 = CurveToken(self.token).totalSupply()
     old_xcp_profit: uint256 = self.xcp_profit
     old_virtual_price: uint256 = self.virtual_price
 
@@ -590,10 +582,10 @@ def exchange(i: uint256, j: uint256, dx: uint256, min_dy: uint256, use_eth: bool
     dy: uint256 = 0
 
     if True:  # scope to reduce size of memory when making internal calls later
-        _coins: address[N_COINS] = coins
+        _coins: address[N_COINS] = self.coins
         if i == 2 and use_eth:
             assert msg.value == dx  # dev: incorrect eth amount
-            WETH(coins[2]).deposit(value=msg.value)
+            WETH(self.coins[2]).deposit(value=msg.value)
         else:
             assert msg.value == 0  # dev: nonzero eth amount
             # assert might be needed for some tokens - removed one to save bytespace
@@ -649,7 +641,7 @@ def exchange(i: uint256, j: uint256, dx: uint256, min_dy: uint256, use_eth: bool
         self.balances[j] = y
         # assert might be needed for some tokens - removed one to save bytespace
         if j == 2 and use_eth:
-            WETH(coins[2]).withdraw(dy)
+            WETH(self.coins[2]).withdraw(dy)
             raw_call(msg.sender, b"", value=dy)
         else:
             ERC20(_coins[j]).transfer(msg.sender, dy)
@@ -716,7 +708,7 @@ def add_liquidity(amounts: uint256[N_COINS], min_mint_amount: uint256):
 
     A_gamma: uint256[2] = self._A_gamma()
 
-    _coins: address[N_COINS] = coins
+    _coins: address[N_COINS] = self.coins
 
     xp: uint256[N_COINS] = self.balances
     amountsp: uint256[N_COINS] = empty(uint256[N_COINS])
@@ -766,7 +758,7 @@ def add_liquidity(amounts: uint256[N_COINS], min_mint_amount: uint256):
 
     D: uint256 = Math(math).newton_D(A_gamma[0], A_gamma[1], xp)
 
-    token_supply: uint256 = CurveToken(token).totalSupply()
+    token_supply: uint256 = CurveToken(self.token).totalSupply()
     if old_D > 0:
         d_token = token_supply * D / old_D - token_supply
     else:
@@ -777,7 +769,7 @@ def add_liquidity(amounts: uint256[N_COINS], min_mint_amount: uint256):
         d_token_fee = self._calc_token_fee(amountsp, xp) * d_token / 10**10 + 1
         d_token -= d_token_fee
         token_supply += d_token
-        CurveToken(token).mint(msg.sender, d_token)
+        CurveToken(self.token).mint(msg.sender, d_token)
 
         # Calculate price
         # p_i * (dx_i - dtoken / token_supply * xx_i) = sum{k!=i}(p_k * (dtoken / token_supply * xx_k - dx_k))
@@ -807,7 +799,7 @@ def add_liquidity(amounts: uint256[N_COINS], min_mint_amount: uint256):
         self.D = D
         self.virtual_price = 10**18
         self.xcp_profit = 10**18
-        CurveToken(token).mint(msg.sender, d_token)
+        CurveToken(self.token).mint(msg.sender, d_token)
 
     assert d_token >= min_mint_amount, "Slippage"
 
@@ -820,9 +812,9 @@ def remove_liquidity(_amount: uint256, min_amounts: uint256[N_COINS]):
     """
     This withdrawal method is very safe, does no complex math
     """
-    _coins: address[N_COINS] = coins
-    total_supply: uint256 = CurveToken(token).totalSupply()
-    CurveToken(token).burnFrom(msg.sender, _amount)
+    _coins: address[N_COINS] = self.coins
+    total_supply: uint256 = CurveToken(self.token).totalSupply()
+    CurveToken(self.token).burnFrom(msg.sender, _amount)
     balances: uint256[N_COINS] = self.balances
     amount: uint256 = _amount - 1  # Make rounding errors favoring other LPs a tiny bit
 
@@ -844,7 +836,7 @@ def remove_liquidity(_amount: uint256, min_amounts: uint256[N_COINS]):
 @view
 def _calc_withdraw_one_coin(A_gamma: uint256[2], token_amount: uint256, i: uint256, update_D: bool,
                             calc_price: bool) -> (uint256, uint256, uint256, uint256[N_COINS]):
-    token_supply: uint256 = CurveToken(token).totalSupply()
+    token_supply: uint256 = CurveToken(self.token).totalSupply()
     assert token_amount <= token_supply  # dev: token amount more than supply
     assert i < N_COINS  # dev: coin out of range
 
@@ -920,10 +912,10 @@ def remove_liquidity_one_coin(token_amount: uint256, i: uint256, min_amount: uin
         self.future_A_gamma_time = 1
 
     self.balances[i] -= dy
-    CurveToken(token).burnFrom(msg.sender, token_amount)
+    CurveToken(self.token).burnFrom(msg.sender, token_amount)
     self.tweak_price(A_gamma, xp, i, p, D)
 
-    _coins: address[N_COINS] = coins
+    _coins: address[N_COINS] = self.coins
     # assert might be needed for some tokens - removed one to save bytespace
     ERC20(_coins[i]).transfer(msg.sender, dy)
 

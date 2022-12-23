@@ -3,7 +3,10 @@ import click
 from backtest_ape.base import BaseRunner
 from backtest_ape.setup import deploy_mock_erc20
 from backtest_ape.utils import get_test_account
-from backtest_ape.curve.v2.setup import deploy_mock_pool
+from backtest_ape.curve.v2.setup import (
+    deploy_mock_pool,
+    deploy_mock_lp,
+)
 from typing import Any
 
 
@@ -34,6 +37,9 @@ class BaseCurveV2Runner(BaseRunner):
         mock_weth = deploy_mock_erc20("WETH9", "WETH", acc)
         mock_token = deploy_mock_erc20("Mock ERC20", "MOK", acc)
 
+        # deploy the mock lp token
+        mock_lp = deploy_mock_lp("Mock Curve Tricrypto LP", "crv3m", acc)
+
         # deploy the mock curve v2 pool
         A = 1000000  # 10**6
         gamma = 10000000000000  # 10**13
@@ -47,6 +53,7 @@ class BaseCurveV2Runner(BaseRunner):
         price = 1000000000000000000  # 1 wad
         mock_pool = deploy_mock_pool(
             [mock_usd, mock_weth, mock_token],
+            mock_lp,
             A,
             gamma,
             mid_fee,

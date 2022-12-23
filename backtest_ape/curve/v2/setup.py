@@ -4,8 +4,19 @@ from ape.api.accounts import AccountAPI
 from typing import List
 
 
+def deploy_mock_lp(name: str, symbol: str, acc: AccountAPI) -> ContractInstance:
+    """
+    Deploys mock Curve LP Token.
+
+    Returns:
+        :class:`ape.contracts.ContractInstance`
+    """
+    return project.MockCurveToken.deploy(name, symbol, sender=acc)
+
+
 def deploy_mock_pool(
     coins: List[ContractInstance],
+    lp: ContractInstance,
     A: int,
     gamma: int,
     mid_fee: int,
@@ -27,6 +38,8 @@ def deploy_mock_pool(
     params = (
         acc.address,
         acc.address,
+        [coin.address for coin in coins],
+        lp.address,
         A,
         gamma,
         mid_fee,
