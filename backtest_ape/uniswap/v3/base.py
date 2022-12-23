@@ -1,9 +1,9 @@
 import click
 
 from backtest_ape.base import BaseRunner
+from backtest_ape.setup import deploy_mock_erc20
 from backtest_ape.utils import get_test_account
 from backtest_ape.uniswap.v3.setup import (
-    deploy_mock_erc20,
     deploy_mock_position_manager,
     deploy_mock_univ3_factory,
     create_mock_pool,
@@ -15,10 +15,10 @@ class BaseUniswapV3Runner(BaseRunner):
     def __init__(self, **data: Any):
         """
         Overrides BaseRunner init to check ref_addrs contains
-        pool and weth.
+        pool.
         """
         super().__init__(**data)
-        ks = ["pool"]
+        ks = ["pool"]  # TODO: use pydantic validators with ref at base level
         for k in ks:
             if k not in self._refs.keys():
                 raise ValueError(f"ref_addrs does not contain key '{k}'.")
