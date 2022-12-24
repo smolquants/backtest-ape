@@ -30,7 +30,7 @@ def test_deploy_mock_lp(acc):
 
 
 def test_deploy_mock_pool(acc):
-    coins = [deploy_mock_erc20(f"Mock {i}", f"MOK{i}", acc) for i in range(3)]
+    coins = [deploy_mock_erc20(f"Mock {i}", f"MOK{i}", 18, acc) for i in range(3)]
     lp = deploy_mock_lp("Mock Curve", "crv3m", acc)
 
     A = 1000000  # 10**6

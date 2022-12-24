@@ -17,19 +17,19 @@ def test_setup(runner, acc):
     mocks = runner._mocks
     assert set(mocks.keys()) == set(
         [
-            "weth",
-            "token",
+            "tokens",
             "factory",
             "manager",
             "pool",
         ]
     )
-    assert mocks["weth"].symbol() == "WETH"
-    assert mocks["token"].symbol() == "MOK"
+    assert set([token.symbol() for token in mocks["tokens"]]) == set(["WETH", "USDC"])
     assert mocks["factory"].feeAmountTickSpacing(3000) == 60
     assert mocks["manager"].factory() == mocks["factory"].address
     assert mocks["pool"].fee() == 3000
     assert (
-        mocks["factory"].getPool(mocks["weth"].address, mocks["token"].address, 3000)
+        mocks["factory"].getPool(
+            mocks["tokens"][0].address, mocks["tokens"][1].address, 3000
+        )
         == mocks["pool"].address
     )

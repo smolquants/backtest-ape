@@ -1,6 +1,7 @@
 from ape import project
 from ape.contracts import ContractInstance
 from ape.api.accounts import AccountAPI
+from typing import List
 
 
 def deploy_mock_univ3_factory(acc: AccountAPI) -> ContractInstance:
@@ -30,8 +31,7 @@ def deploy_mock_position_manager(
 
 def create_mock_pool(
     factory: ContractInstance,
-    tokenA: ContractInstance,
-    tokenB: ContractInstance,
+    tokens: List[ContractInstance],
     fee: int,
     price: int,
     acc: AccountAPI,
@@ -42,6 +42,7 @@ def create_mock_pool(
     Returns:
         :class:`ape.contracts.ContractInstance`
     """
+    [tokenA, tokenB] = tokens
     receipt = factory.createPool(tokenA.address, tokenB.address, fee, sender=acc)
     pool_addr = receipt.return_value
     pool = project.MockUniswapV3Pool.at(pool_addr)

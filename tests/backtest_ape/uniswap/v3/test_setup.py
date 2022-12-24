@@ -22,7 +22,7 @@ def test_deploy_mock_univ3_factory(acc):
 
 def test_deploy_mock_position_manager(acc):
     factory = deploy_mock_univ3_factory(acc)
-    weth = deploy_mock_erc20("WETH9", "WETH", acc)
+    weth = deploy_mock_erc20("WETH9", "WETH", 18, acc)
     manager = deploy_mock_position_manager(factory, weth, acc)
     assert type(manager) == ContractInstance
     assert manager.factory() == factory.address
@@ -35,11 +35,12 @@ def test_deploy_mock_position_manager(acc):
 @pytest.mark.parametrize("fee", [500, 3000, 10000])
 def test_create_mock_pool(acc, fee):
     factory = deploy_mock_univ3_factory(acc)
-    tokenA = deploy_mock_erc20("Token A", "TOKA", acc)
-    tokenB = deploy_mock_erc20("Token B", "TOKB", acc)
+    tokenA = deploy_mock_erc20("Token A", "TOKA", 18, acc)
+    tokenB = deploy_mock_erc20("Token B", "TOKB", 18, acc)
+    tokens = [tokenA, tokenB]
     price = 1000000000000000000  # 1 wad
 
-    pool = create_mock_pool(factory, tokenA, tokenB, fee, price, acc)
+    pool = create_mock_pool(factory, tokens, fee, price, acc)
     assert pool.factory() == factory.address
     assert pool.fee() == fee
     assert pool.tickSpacing() == factory.feeAmountTickSpacing(fee)

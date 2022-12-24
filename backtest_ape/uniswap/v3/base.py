@@ -1,5 +1,6 @@
 import click
 
+from ape import Contract
 from backtest_ape.base import BaseRunner
 from backtest_ape.setup import deploy_mock_erc20
 from backtest_ape.utils import get_test_account
@@ -8,11 +9,22 @@ from backtest_ape.uniswap.v3.setup import (
     deploy_mock_univ3_factory,
     create_mock_pool,
 )
-from typing import ClassVar, List
+from typing import Any, ClassVar, List
 
 
 class BaseUniswapV3Runner(BaseRunner):
     _ref_keys: ClassVar[List[str]] = ["pool"]
+
+    def __init__(self, **data: Any):
+        """
+        Overrides BaseRunner init to also store ape Contract instances
+        for tokens in ref pool.
+        """
+        super().__init__(**data)
+
+        # store token contracts in _refs
+        pool = self._refs["pool"]
+        self._refs["tokens"] = [Contract(pool.token0()), Contract(pool.token1())]
 
     def setup(self):
         """
@@ -27,8 +39,17 @@ class BaseUniswapV3Runner(BaseRunner):
 
         # deploy the mock erc20s
         click.echo("Deploying mock ERC20 tokens ...")
-        mock_weth = deploy_mock_erc20("WETH9", "WETH", acc)
-        mock_token = deploy_mock_erc20("Mock ERC20", "MOK", acc)
+        mock_tokens = [
+            deploy_mock_erc20(f"Mock Token{i}", token.symbol(), token.decimals(), acc)
+            for i, token in enumerate(self._refs["tokens"])
+        ]
+
+        # deploy weth if necessary
+        mock_weth = (
+            mock_tokens[0] if mock_tokens[0].symbol() == "WETH" else mock_tokens[1]
+        )
+        if mock_weth.symbol() != "WETH":
+            mock_weth = deploy_mock_erc20("Mock WETH9", "WETH", 18, acc)
 
         # deploy the mock univ3 factory
         click.echo("Deploying mock Uniswap V3 factory ...")
@@ -44,16 +65,14 @@ class BaseUniswapV3Runner(BaseRunner):
         price = 1000000000000000000  # 1 wad
         mock_pool = create_mock_pool(
             mock_factory,
-            mock_weth,
-            mock_token,
+            mock_tokens,
             fee,
             price,
             acc,
         )
 
         self._mocks = {
-            "weth": mock_weth,
-            "token": mock_token,
+            "tokens": mock_tokens,
             "factory": mock_factory,
             "manager": mock_manager,
             "pool": mock_pool,

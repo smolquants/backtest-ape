@@ -2,11 +2,18 @@ import pandas as pd
 
 from ape import chain, project
 from backtest_ape.curve.v2.base import BaseCurveV2Runner
+from pydantic import validator
 from typing import List, Mapping
 
 
 class CurveV2LPRunner(BaseCurveV2Runner):
     amounts: List[int]
+
+    @validator("amounts")
+    def amounts_len_equals_num_coins(cls, v, values, **kwargs):
+        if "num_coins" in values and len(v) != values["num_coins"]:
+            raise ValueError("len(amounts) != num_coins")
+        return v
 
     def setup(self):
         """
@@ -20,7 +27,7 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         # deploy the backtester
         pool = self._mocks["pool"]
         self._backtester = project.CurveV2LPBacktest.deploy(
-            pool.address, 3, sender=self._acc
+            pool.address, self.num_coins, sender=self._acc
         )
         self._initialized = True
 
@@ -37,7 +44,7 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         ref_pool = self._refs["pool"]
         state = {}
 
-        num_coins = self._backtester.numCoins()
+        num_coins = self.num_coins
         state["balances"] = [
             ref_pool.balances(i, block_identifier=number) for i in range(num_coins)
         ]
@@ -62,63 +69,33 @@ class CurveV2LPRunner(BaseCurveV2Runner):
             state (Mapping): The init state of mocks.
         """
         mock_pool = self._mocks["pool"]
-        mock_usd = self._mocks["usd"]
-        mock_token = self._mocks["token"]
-        mock_weth = self._mocks["weth"]
+        mock_coins = self._mocks["coins"]
         ecosystem = chain.provider.network.ecosystem
 
         # set the current balances and D on pool for liquidity add to work
         self.set_mocks_state(state)
 
         # mint tokens to backtester, approve pool to transfer
-        [amount_usd, amount_token, amount_weth] = self.amounts
-        targets = [
-            mock_usd.address,
-            mock_token.address,
-            mock_weth.address,
-            mock_usd.address,
-            mock_token.address,
-            mock_weth.address,
-        ]
+        targets = [mock_coin.address for mock_coin in mock_coins]
         datas = [
             ecosystem.encode_transaction(
-                mock_usd.address,
-                mock_usd.mint.abis[0],
+                mock_coin.address,
+                mock_coin.mint.abis[0],
                 self._backtester.address,
-                amount_usd,
-            ).data,
-            ecosystem.encode_transaction(
-                mock_token.address,
-                mock_token.mint.abis[0],
-                self._backtester.address,
-                amount_token,
-            ).data,
-            ecosystem.encode_transaction(
-                mock_weth.address,
-                mock_weth.mint.abis[0],
-                self._backtester.address,
-                amount_weth,
-            ).data,
-            ecosystem.encode_transaction(
-                mock_usd.address,
-                mock_usd.approve.abis[0],
-                mock_pool.address,
-                2**256 - 1,
-            ).data,
-            ecosystem.encode_transaction(
-                mock_token.address,
-                mock_token.approve.abis[0],
-                mock_pool.address,
-                2**256 - 1,
-            ).data,
-            ecosystem.encode_transaction(
-                mock_weth.address,
-                mock_weth.approve.abis[0],
-                mock_pool.address,
-                2**256 - 1,
-            ).data,
+                self.amounts[i],
+            ).data
+            for i, mock_coin in enumerate(mock_coins)
         ]
-        values = [0, 0, 0, 0, 0, 0]
+        datas += [
+            ecosystem.encode_transaction(
+                mock_coin.address,
+                mock_coin.approve.abis[0],
+                mock_pool.address,
+                2**256 - 1,
+            ).data
+            for i, mock_coin in enumerate(mock_coins)
+        ]
+        values = [0 for _ in range(2 * self.num_coins)]
         self._backtester.multicall(targets, datas, values, sender=self._acc)
 
         # then mint the LP position
