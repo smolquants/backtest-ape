@@ -6,9 +6,9 @@ import {ICurveV2Pool} from "./interfaces/ICurveV2Pool.sol";
 import {ICurveV2Token} from "./interfaces/ICurveV2Token.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-/// @title Curve Tricrypto Liquidity Provider Backtester
+/// @title Curve V2 Liquidity Provider Backtester
 /// @notice Backtests an LP position in pool reporting value of LP tokens in USDT terms
-contract CurveTricryptoLPBacktest is Backtest {
+contract CurveV2LPBacktest is Backtest {
     ICurveV2Pool public immutable pool;
     ICurveV2Token public immutable lp;
     uint256 public immutable numCoins;

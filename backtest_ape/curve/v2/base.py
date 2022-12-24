@@ -25,8 +25,8 @@ class BaseCurveV2Runner(BaseRunner):
         # deploy the mock erc20s
         click.echo("Deploying mock ERC20 tokens ...")
         mock_usd = deploy_mock_erc20("Mock USD", "USDM", acc)
-        mock_weth = deploy_mock_erc20("WETH9", "WETH", acc)
         mock_token = deploy_mock_erc20("Mock ERC20", "MOK", acc)
+        mock_weth = deploy_mock_erc20("WETH9", "WETH", acc)
 
         # deploy the mock lp token
         mock_lp = deploy_mock_lp("Mock Curve Tricrypto LP", "crv3m", acc)
@@ -43,7 +43,7 @@ class BaseCurveV2Runner(BaseRunner):
         ma_half_time = 600
         price = 1000000000000000000  # 1 wad
         mock_pool = deploy_mock_pool(
-            [mock_usd, mock_weth, mock_token],
+            [mock_usd, mock_token, mock_weth],
             mock_lp,
             A,
             gamma,
@@ -60,8 +60,8 @@ class BaseCurveV2Runner(BaseRunner):
 
         self._mocks = {
             "usd": mock_usd,
-            "weth": mock_weth,
             "token": mock_token,
+            "weth": mock_weth,
             "lp": mock_lp,
             "pool": mock_pool,
         }

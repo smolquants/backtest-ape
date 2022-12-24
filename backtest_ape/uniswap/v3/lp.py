@@ -143,7 +143,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         self._backtester.push(token_id, sender=self._acc)
 
         # set the mock state
-        self.set_mock_state(state)
+        self.set_mocks_state(state)
 
     def set_mocks_state(self, state: Mapping):
         """

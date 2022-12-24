@@ -10,7 +10,7 @@ requires-python = ">=3.8,<3.11"
 license = "MIT"
 keywords = []
 authors = [
-  { name = "fmrmf", email = "m@fmrmf.xyz" },
+  { name = "smolquants", email = "dev@smolquants.xyz" },
 ]
 classifiers = [
   "Development Status :: 4 - Beta",

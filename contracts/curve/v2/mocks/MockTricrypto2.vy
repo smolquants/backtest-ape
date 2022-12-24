@@ -184,8 +184,8 @@ PRICE_MASK: constant(uint256) = 2**PRICE_SIZE - 1
 # N_COINS = 4 -> 10**8  (10**18 -> 10**10)
 # PRICE_PRECISION_MUL: constant(uint256) = 1
 PRECISIONS: constant(uint256[N_COINS]) = [
-    1000000000000,
-    10000000000,
+    1,
+    1,
     1,
 ]
 
@@ -1141,9 +1141,19 @@ def set_balances(_balances: uint256[N_COINS]):
     for i in range(N_COINS):
         self.balances[i] = _balances[i]
 
+
 @external
 def set_D(_D: uint256):
     self.D = _D
+
+
+@external
+def set_A_gamma(_A_gamma: uint256[4]):
+    self.initial_A_gamma = _A_gamma[0]
+    self.future_A_gamma = _A_gamma[1]
+    self.initial_A_gamma_time = _A_gamma[2]
+    self.future_A_gamma_time = _A_gamma[3]
+
 
 @external
 def set_packed_prices(_prices: uint256[N_COINS-1]):

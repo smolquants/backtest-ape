@@ -18,19 +18,19 @@ def test_setup(runner, acc):
     assert set(mocks.keys()) == set(
         [
             "usd",
-            "weth",
             "token",
+            "weth",
             "lp",
             "pool",
         ]
     )
     assert mocks["usd"].symbol() == "USDM"
-    assert mocks["weth"].symbol() == "WETH"
     assert mocks["token"].symbol() == "MOK"
+    assert mocks["weth"].symbol() == "WETH"
     assert mocks["pool"].A() == 1000000
     assert [mocks["pool"].coins(i) for i in range(3)] == [
         mocks["usd"].address,
-        mocks["weth"].address,
         mocks["token"].address,
+        mocks["weth"].address,
     ]
     assert mocks["pool"].token() == mocks["lp"].address
