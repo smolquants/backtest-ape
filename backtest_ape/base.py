@@ -4,18 +4,25 @@ import pandas as pd
 from ape import Contract, chain
 from ape.contracts import ContractInstance
 from ape.api.accounts import AccountAPI
-from pydantic import BaseModel
-from typing import Any, Mapping, Optional
+from pydantic import BaseModel, validator
+from typing import Any, ClassVar, List, Mapping, Optional
 
 
 class BaseRunner(BaseModel):
     ref_addrs: Optional[Mapping[str, str]] = {}
 
+    _ref_keys: ClassVar[List[str]] = []
     _refs: Mapping[str, ContractInstance]
     _mocks: Mapping[str, ContractInstance]
     _acc: AccountAPI
     _backtester: ContractInstance
     _initialized: bool = False
+
+    @validator("ref_addrs")
+    def validate_keys_in_ref_addrs(cls, v):
+        if set(cls._ref_keys) > set(v.keys()):
+            raise ValueError('cls._ref_keys not subset of ref_addrs.keys()')
+        return v
 
     def __init__(self, **data: Any):
         """

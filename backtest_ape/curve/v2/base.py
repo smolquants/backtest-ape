@@ -7,20 +7,11 @@ from backtest_ape.curve.v2.setup import (
     deploy_mock_pool,
     deploy_mock_lp,
 )
-from typing import Any
+from typing import ClassVar, List
 
 
 class BaseCurveV2Runner(BaseRunner):
-    def __init__(self, **data: Any):
-        """
-        Overrides BaseRunner init to check ref_addrs contains
-        pool.
-        """
-        super().__init__(**data)
-        ks = ["pool"]  # TODO: use pydantic validators with ref in base runner
-        for k in ks:
-            if k not in self._refs.keys():
-                raise ValueError(f"ref_addrs does not contain key '{k}'.")
+    _ref_keys: ClassVar[List[str]] = ["pool"]
 
     def setup(self):
         """

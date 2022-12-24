@@ -8,20 +8,11 @@ from backtest_ape.uniswap.v3.setup import (
     deploy_mock_univ3_factory,
     create_mock_pool,
 )
-from typing import Any
+from typing import ClassVar, List
 
 
 class BaseUniswapV3Runner(BaseRunner):
-    def __init__(self, **data: Any):
-        """
-        Overrides BaseRunner init to check ref_addrs contains
-        pool.
-        """
-        super().__init__(**data)
-        ks = ["pool"]  # TODO: use pydantic validators with ref at base level
-        for k in ks:
-            if k not in self._refs.keys():
-                raise ValueError(f"ref_addrs does not contain key '{k}'.")
+    _ref_keys: ClassVar[List[str]] = ["pool"]
 
     def setup(self):
         """
