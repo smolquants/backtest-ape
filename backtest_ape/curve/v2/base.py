@@ -62,5 +62,6 @@ class BaseCurveV2Runner(BaseRunner):
             "usd": mock_usd,
             "weth": mock_weth,
             "token": mock_token,
+            "lp": mock_lp,
             "pool": mock_pool,
         }
