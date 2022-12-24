@@ -9,7 +9,7 @@ from typing import Any, ClassVar, List, Mapping, Optional
 
 
 class BaseRunner(BaseModel):
-    ref_addrs: Optional[Mapping[str, str]] = {}
+    ref_addrs: Mapping[str, str]
 
     _ref_keys: ClassVar[List[str]] = []
     _refs: Mapping[str, ContractInstance]
@@ -19,9 +19,9 @@ class BaseRunner(BaseModel):
     _initialized: bool = False
 
     @validator("ref_addrs")
-    def validate_keys_in_ref_addrs(cls, v):
+    def ref_addrs_has_keys(cls, v):
         if set(cls._ref_keys) > set(v.keys()):
-            raise ValueError('cls._ref_keys not subset of ref_addrs.keys()')
+            raise ValueError("cls._ref_keys not subset of ref_addrs.keys()")
         return v
 
     def __init__(self, **data: Any):
