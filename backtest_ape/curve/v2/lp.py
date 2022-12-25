@@ -77,6 +77,7 @@ class CurveV2LPRunner(BaseCurveV2Runner):
 
         # mint tokens to backtester, approve pool to transfer
         targets = [mock_coin.address for mock_coin in mock_coins]
+        targets += targets
         datas = [
             ecosystem.encode_transaction(
                 mock_coin.address,

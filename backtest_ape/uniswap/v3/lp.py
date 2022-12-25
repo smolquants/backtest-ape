@@ -67,6 +67,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         Args:
             state (Mapping): The init state of mocks.
         """
+        # TODO: Fix for general tokens
         mock_weth = self._mocks["weth"]
         mock_token = self._mocks["token"]
         mock_manager = self._mocks["manager"]
