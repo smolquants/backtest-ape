@@ -5,17 +5,14 @@ from backtest_ape.curve.v2.lp import CurveV2LPRunner
 
 @pytest.fixture
 def runner():
-    amount_usd = int(1e24)
-    amount_weth = int(1e24 * 1220)
-    amount_wbtc = int(1e24 * 16834)
+    amount_usd = int(1e12)  # 1M USD
+    amount_weth = int((1e24 / 1218668363989192860592) * 1e18)
+    amount_wbtc = int((1e24 / 16816946825680501806263) * 1e8)
+    amounts = [amount_usd, amount_wbtc, amount_weth]
     return CurveV2LPRunner(
         ref_addrs={"pool": "0xD51a44d3FaE010294C616388b506AcdA1bfAAE46"},
-        num_coins=3,
-        amounts=[
-            amount_usd,  # USDT
-            amount_wbtc,  # WBTC
-            amount_weth,  # WETH
-        ],
+        num_coins=len(amounts),
+        amounts=amounts,
     )
 
 
@@ -34,7 +31,104 @@ def test_get_refs_state(runner):
         16816946825680501806263,
         1218668363989192860592,
     ]
+    assert state["total_supply"] == 183341149725574822964704
 
 
 def test_init_mocks_state(runner):
-    pass
+    runner.setup()
+    mock_pool = runner._mocks["pool"]
+    mock_lp = runner._mocks["lp"]
+    mock_coins = runner._mocks["coins"]
+
+    state = {
+        "balances": [
+            51444788313173,
+            306130683764,
+            42421274934619665540607,
+        ],
+        "D": 154655480528709339739900799,
+        "A_gamma": [
+            183752478137306770270222288013175834186240000,
+            581076037942835227425498917514114728328226821,
+            1633548703,
+            0,
+        ],
+        "prices": [
+            16816946825680501806263,
+            1218668363989192860592,
+        ],
+        "total_supply": 183341149725574822964704,
+    }
+    runner.init_mocks_state(state)
+
+    coin_balances = []
+    for i, mock_coin in enumerate(mock_coins):
+        # check tokens minted
+        supply = mock_coin.totalSupply()
+        assert supply == runner.amounts[i]
+
+        # check pool approved to spend from backtester
+        allowance = mock_coin.allowance(runner._backtester.address, mock_pool.address)
+        assert allowance == 2**256 - 1
+
+        # check coin balances in pool for liquidity added
+        coin_balances.append(mock_coin.balanceOf(mock_pool.address))
+        assert coin_balances[i] == runner.amounts[i]
+
+        # check total supply of LP token remains same but with tokens to backtester
+        assert mock_lp.totalSupply() == state["total_supply"]
+
+        minted = state["total_supply"] - mock_lp.balanceOf(runner._acc.address)
+        assert mock_lp.balanceOf(runner._backtester.address) == minted
+        assert mock_lp.balanceOf(runner._backtester.address) > 0
+        print(
+            "mock_lp.balanceOf(runner._backtester.address)",
+            mock_lp.balanceOf(runner._backtester.address),
+        )
+
+
+def test_set_mocks_state(runner):
+    runner.setup()
+    state = {
+        "balances": [
+            51444788313173,
+            306130683764,
+            42421274934619665540607,
+        ],
+        "D": 154655480528709339739900799,
+        "A_gamma": [
+            183752478137306770270222288013175834186240000,
+            581076037942835227425498917514114728328226821,
+            1633548703,
+            0,
+        ],
+        "prices": [
+            16816946825680501806263,
+            1218668363989192860592,
+        ],
+        "total_supply": 183341149725574822964704,
+    }
+    runner.set_mocks_state(state)
+
+    # check mock pool updated to given state
+    mock_pool = runner._mocks["pool"]
+    mock_lp = runner._mocks["lp"]
+    assert [mock_pool.balances(i) for i in range(runner.num_coins)] == state["balances"]
+    assert mock_pool.D() == state["D"]
+    assert [
+        mock_pool.initial_A_gamma(),
+        mock_pool.future_A_gamma(),
+        mock_pool.initial_A_gamma_time(),
+        mock_pool.future_A_gamma_time(),
+    ] == state["A_gamma"]
+    assert [mock_pool.price_oracle(i) for i in range(runner.num_coins - 1)] == state[
+        "prices"
+    ]
+
+    # check mock lp supply minted to runner acc
+    assert mock_lp.balanceOf(runner._acc.address) == state["total_supply"]
+
+    # modify total supply state and check burned difference from runner acc
+    state["total_supply"] -= 100
+    runner.set_mocks_state(state)
+    assert mock_lp.balanceOf(runner._acc.address) == state["total_supply"]

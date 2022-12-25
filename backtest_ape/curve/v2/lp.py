@@ -3,7 +3,7 @@ import pandas as pd
 from ape import chain, project
 from backtest_ape.curve.v2.base import BaseCurveV2Runner
 from pydantic import validator
-from typing import List, Mapping
+from typing import Any, List, Mapping
 
 
 class CurveV2LPRunner(BaseCurveV2Runner):
@@ -14,6 +14,20 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         if "num_coins" in values and len(v) != values["num_coins"]:
             raise ValueError("len(amounts) != num_coins")
         return v
+
+    def __init__(self, **data: Any):
+        """
+        Overrides BaseCurveV2Runner init to also check amounts < balances
+        in pool.
+        """
+        super().__init__(**data)
+
+        # check balances in pool > amounts
+        pool = self._refs["pool"]
+        for i, coin in enumerate(self._refs["coins"]):
+            balance = coin.balanceOf(pool.address)
+            if balance < self.amounts[i]:
+                raise ValueError("amounts not less than balances")
 
     def setup(self):
         """
@@ -42,6 +56,7 @@ class CurveV2LPRunner(BaseCurveV2Runner):
             Mapping: The state of references at block.
         """
         ref_pool = self._refs["pool"]
+        ref_lp = self._refs["lp"]
         state = {}
 
         num_coins = self.num_coins
@@ -59,6 +74,7 @@ class CurveV2LPRunner(BaseCurveV2Runner):
             ref_pool.price_oracle(i, block_identifier=number)
             for i in range(num_coins - 1)
         ]
+        state["total_supply"] = ref_lp.totalSupply(block_identifier=number)
         return state
 
     def init_mocks_state(self, state: Mapping):
@@ -69,6 +85,7 @@ class CurveV2LPRunner(BaseCurveV2Runner):
             state (Mapping): The init state of mocks.
         """
         mock_pool = self._mocks["pool"]
+        mock_lp = self._mocks["lp"]
         mock_coins = self._mocks["coins"]
         ecosystem = chain.provider.network.ecosystem
 
@@ -107,10 +124,14 @@ class CurveV2LPRunner(BaseCurveV2Runner):
                 mock_pool.add_liquidity.abis[0],
                 self.amounts,
                 0,
-            ),
+            ).data,
             0,
             sender=self._acc,
         )
+
+        # burn the equivalent amount of minted LP tokens from runner acc
+        minted = mock_lp.balanceOf(self._backtester.address)
+        mock_lp.burnFrom(self._acc.address, minted, sender=self._acc)
 
         # set the mock state again so liquidity changes use ref state
         self.set_mocks_state(state)
@@ -122,11 +143,20 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         Args:
             state (Mapping): The new state of mocks.
         """
+        # update mock pool for state attrs
         mock_pool = self._mocks["pool"]
         mock_pool.set_balances(state["balances"], sender=self._acc)
         mock_pool.set_D(state["D"], sender=self._acc)
         mock_pool.set_A_gamma(state["A_gamma"], sender=self._acc)
         mock_pool.set_packed_prices(state["prices"], sender=self._acc)
+
+        # update mock LP token supply for state attrs
+        mock_lp = self._mocks["lp"]
+        d_supply = state["total_supply"] - mock_lp.totalSupply()
+        if d_supply >= 0:
+            mock_lp.mint(self._acc.address, abs(d_supply), sender=self._acc)
+        else:
+            mock_lp.burnFrom(self._acc.address, abs(d_supply), sender=self._acc)
 
     def update_strategy(self):
         """

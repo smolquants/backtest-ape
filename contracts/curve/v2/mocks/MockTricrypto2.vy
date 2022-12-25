@@ -184,8 +184,8 @@ PRICE_MASK: constant(uint256) = 2**PRICE_SIZE - 1
 # N_COINS = 4 -> 10**8  (10**18 -> 10**10)
 # PRICE_PRECISION_MUL: constant(uint256) = 1
 PRECISIONS: constant(uint256[N_COINS]) = [
-    1,
-    1,
+    1000000000000,
+    10000000000,
     1,
 ]
 
@@ -832,6 +832,12 @@ def remove_liquidity(_amount: uint256, min_amounts: uint256[N_COINS]):
     log RemoveLiquidity(msg.sender, balances, total_supply - _amount)
 
 
+@view
+@external
+def calc_token_amount(amounts: uint256[N_COINS], deposit: bool) -> uint256:
+    return Views(views).calc_token_amount(amounts, deposit)
+
+
 @internal
 @view
 def _calc_withdraw_one_coin(A_gamma: uint256[2], token_amount: uint256, i: uint256, update_D: bool,
@@ -1138,8 +1144,7 @@ def set_admin_fee_receiver(_admin_fee_receiver: address):
 # mock setter fns for overriding state vars
 @external
 def set_balances(_balances: uint256[N_COINS]):
-    for i in range(N_COINS):
-        self.balances[i] = _balances[i]
+    self.balances = _balances
 
 
 @external

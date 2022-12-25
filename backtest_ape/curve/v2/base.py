@@ -36,6 +36,9 @@ class BaseCurveV2Runner(BaseRunner):
         if not matches:
             raise ValueError("num_coins not same as pool.N_COINS")
 
+        # store pool lp token in _refs
+        self._refs["lp"] = Contract(pool.token())
+
     def setup(self):
         """
         Sets up Curve V2 runner for testing.
@@ -52,7 +55,7 @@ class BaseCurveV2Runner(BaseRunner):
             for i, coin in enumerate(self._refs["coins"])
         ]
 
-        # deploy the mock lp token
+        # deploy the mock lp token and mint existing liquidity tokens
         mock_lp = deploy_mock_lp("Mock Curve V2 LP", "crv3m", acc)
 
         # deploy the mock curve v2 pool
