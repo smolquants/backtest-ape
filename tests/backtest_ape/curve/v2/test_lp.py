@@ -1,4 +1,5 @@
 import pytest
+import pandas as pd
 
 from backtest_ape.curve.v2.lp import CurveV2LPRunner
 
@@ -81,10 +82,6 @@ def test_init_mocks_state(runner):
         minted = state["total_supply"] - mock_lp.balanceOf(runner._acc.address)
         assert mock_lp.balanceOf(runner._backtester.address) == minted
         assert mock_lp.balanceOf(runner._backtester.address) > 0
-        print(
-            "mock_lp.balanceOf(runner._backtester.address)",
-            mock_lp.balanceOf(runner._backtester.address),
-        )
 
 
 def test_set_mocks_state(runner):
@@ -132,3 +129,53 @@ def test_set_mocks_state(runner):
     state["total_supply"] -= 100
     runner.set_mocks_state(state)
     assert mock_lp.balanceOf(runner._acc.address) == state["total_supply"]
+
+
+def test_record(runner):
+    runner.setup()
+
+    df = pd.DataFrame()
+    number = 16254713
+    state = {
+        "balances": [
+            51444788313173,
+            306130683764,
+            42421274934619665540607,
+        ],
+        "D": 154655480528709339739900799,
+        "A_gamma": [
+            183752478137306770270222288013175834186240000,
+            581076037942835227425498917514114728328226821,
+            1633548703,
+            0,
+        ],
+        "prices": [
+            16816946825680501806263,
+            1218668363989192860592,
+        ],
+        "total_supply": 183341149725574822964704,
+    }
+    value = 3000000000
+    df = runner.record(df, number, state, value)
+
+    # check pd dataframe has new row
+    pd.testing.assert_frame_equal(
+        df,
+        pd.DataFrame(
+            data={
+                "number": [number],
+                "value": [value],
+                "D": [state["D"]],
+                "total_supply": [state["total_supply"]],
+                "balances0": [state["balances"][0]],
+                "balances1": [state["balances"][1]],
+                "balances2": [state["balances"][2]],
+                "A_gamma0": [state["A_gamma"][0]],
+                "A_gamma1": [state["A_gamma"][1]],
+                "A_gamma2": [state["A_gamma"][2]],
+                "A_gamma3": [state["A_gamma"][3]],
+                "prices0": [state["prices"][0]],
+                "prices1": [state["prices"][1]],
+            }
+        ),
+    )

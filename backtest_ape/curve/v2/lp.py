@@ -181,12 +181,27 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         Returns:
             :class:`pd.DataFrame`: The updated dataframe with the new record.
         """
-        row = pd.DataFrame(
-            data={
-                "number": number,
-                "balances": state["balances"],
-                "prices": state["prices"],
-                "value": value,
-            }
-        )
+        data = {"number": number, "value": value}
+        data.update(state)
+
+        # unfold the lists
+        updates = {}
+        removes = []
+        for k, v in data.items():
+            if isinstance(v, list):
+                for i, item in enumerate(v):
+                    updates[f"{k}{i}"] = item
+                removes.append(k)
+
+        # remove the list keys
+        for k in removes:
+            del data[k]
+
+        # update data for unfolded list items
+        data.update(updates)
+
+        row = pd.DataFrame(data={k: [v] for k, v in data.items()})
+        if df.empty:
+            return row
+
         return pd.concat([df, row])
