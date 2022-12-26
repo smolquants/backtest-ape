@@ -25,7 +25,7 @@ hatch shell
 ## Usage
 
 ```sh
-hatch run ape run backtester
+(backtest-ape) $ ape run backtester
 INFO: Starting 'anvil' process.
 You are connected to provider network ethereum:mainnet-fork:foundry.
 Runner type (BaseRunner, BaseCurveV2Runner, BaseUniswapV3Runner, CurveV2LPRunner, UniswapV3LPRunner): CurveV2LPRunner
