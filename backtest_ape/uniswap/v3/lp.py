@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 
 from ape import chain, project
@@ -181,19 +182,18 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         """
         pass
 
-    def record(
-        self, df: pd.DataFrame, number: int, state: Mapping, value: int
-    ) -> pd.DataFrame:
+    def record(self, path: str, number: int, state: Mapping, value: int):
         """
         Records the value and possibly some state at the given block.
 
         Args:
-            df (:class:`pd.DataFrame`): The dataframe to record in.
+            path (str): The path to the csv file to write the record to.
             number (int): The block number.
             state (Mapping): The state of references at block number.
             value (int): The value of the backtester for the state.
         """
-        row = pd.DataFrame(
+        header = not os.path.exists(path)
+        df = pd.DataFrame(
             data={
                 "number": number,
                 "tick": state["slot0"].tick,
@@ -203,4 +203,4 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
                 "value": value,
             }
         )
-        return pd.concat([df, row])
+        df.to_csv(path, index=False, mode="a", header=header)

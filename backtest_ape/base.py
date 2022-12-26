@@ -77,32 +77,29 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("update_strategy not implemented.")
 
-    def record(
-        self, df: pd.DataFrame, number: int, state: Mapping, value: int
-    ) -> pd.DataFrame:
+    def record(self, path: str, number: int, state: Mapping, value: int):
         """
         Records the value and possibly some state at the given block.
 
         Args:
-            df (:class:`pd.DataFrame`): The dataframe to record in.
+            path (str): The path to the csv file to write the record to.
             number (int): The block number.
             state (Mapping): The state of references at block number.
             value (int): The value of the backtester for the state.
-
-        Returns:
-            :class:`pd.DataFrame`: The updated dataframe with the new record.
         """
         raise NotImplementedError("record not implemented.")
 
     def backtest(
         self,
+        path: str,
         start: int,
         stop: Optional[int] = None,
-    ) -> pd.DataFrame:
+    ):
         """
         Backtests strategy between start and stop blocks.
 
         Args:
+            path (str): The path to the csv file to write the record to.
             start (int): The start block number.
             stop (Optional[int]): Then stop block number.
 
@@ -122,7 +119,6 @@ class BaseRunner(BaseModel):
         self.init_mocks_state(self.get_refs_state(start))
 
         click.echo(f"Iterating from block number {start+1} to {stop} ...")
-        df = pd.DataFrame()
         for number in range(start + 1, stop, 1):
             click.echo(f"Processing block {number} ...")
 
@@ -139,9 +135,7 @@ class BaseRunner(BaseModel):
             # record value function on backtester and any additional state
             value = self._backtester.value()
             click.echo(f"Backtester value at block {number}: {value}")
-            df = self.record(df, number, refs_state, value)
-
-        return df
+            self.record(path, number, refs_state, value)
 
     def forwardtest(self, data: pd.DataFrame) -> pd.DataFrame:
         """

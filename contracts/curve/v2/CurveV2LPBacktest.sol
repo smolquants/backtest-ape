@@ -7,7 +7,7 @@ import {ICurveV2Token} from "./interfaces/ICurveV2Token.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @title Curve V2 Liquidity Provider Backtester
-/// @notice Backtests an LP position in pool reporting value of LP tokens in USDT terms
+/// @notice Backtests an LP position in pool reporting value of LP tokens in coin0 terms
 contract CurveV2LPBacktest is Backtest {
     ICurveV2Pool public immutable pool;
     ICurveV2Token public immutable lp;
@@ -24,8 +24,8 @@ contract CurveV2LPBacktest is Backtest {
         }
     }
 
-    /// @notice Reports the USDT value of the LP token
-    /// @return value_ The current USDT value of the LP tokens owned by this contract
+    /// @notice Reports the coin0 (quote) value of the LP token
+    /// @return value_ The current coin0 value of the LP tokens owned by this contract
     function value() public view virtual override returns (uint256 value_) {
         uint256 amount = lp.balanceOf(address(this));
         uint256 totalSupply = lp.totalSupply();
@@ -42,7 +42,7 @@ contract CurveV2LPBacktest is Backtest {
                 continue;
             }
 
-            // convert values to USDT denom using oracle price
+            // convert values to coin0 denom using oracle price
             uint256 price = pool.price_oracle(i - 1);
             value_ += ((price * balance * 10 ** decimals[0]) / (10 ** (18 + decimals[i]))); // mulDiv and decimal conversion
         }

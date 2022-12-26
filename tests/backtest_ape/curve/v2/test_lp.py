@@ -1,4 +1,6 @@
+import os
 import pytest
+import numpy as np
 import pandas as pd
 
 from backtest_ape.curve.v2.lp import CurveV2LPRunner
@@ -15,6 +17,14 @@ def runner():
         num_coins=len(amounts),
         amounts=amounts,
     )
+
+
+@pytest.fixture
+def path():
+    p = "tests/results/curve/v2/lp.csv"
+    if os.path.exists(p):
+        os.remove(p)
+    return p
 
 
 def test_get_refs_state(runner):
@@ -131,7 +141,7 @@ def test_set_mocks_state(runner):
     assert mock_lp.balanceOf(runner._acc.address) == state["total_supply"]
 
 
-def test_record(runner):
+def test_record(runner, path):
     runner.setup()
 
     df = pd.DataFrame()
@@ -156,26 +166,40 @@ def test_record(runner):
         "total_supply": 183341149725574822964704,
     }
     value = 3000000000
-    df = runner.record(df, number, state, value)
+    runner.record(path, number, state, value)
 
     # check pd dataframe has new row
-    pd.testing.assert_frame_equal(
-        df,
-        pd.DataFrame(
-            data={
-                "number": [number],
-                "value": [value],
-                "D": [state["D"]],
-                "total_supply": [state["total_supply"]],
-                "balances0": [state["balances"][0]],
-                "balances1": [state["balances"][1]],
-                "balances2": [state["balances"][2]],
-                "A_gamma0": [state["A_gamma"][0]],
-                "A_gamma1": [state["A_gamma"][1]],
-                "A_gamma2": [state["A_gamma"][2]],
-                "A_gamma3": [state["A_gamma"][3]],
-                "prices0": [state["prices"][0]],
-                "prices1": [state["prices"][1]],
-            }
-        ),
+    df = pd.read_csv(path)
+    np.testing.assert_equal(
+        list(df.columns),
+        [
+            "number",
+            "value",
+            "D",
+            "total_supply",
+            "balances0",
+            "balances1",
+            "balances2",
+            "A_gamma0",
+            "A_gamma1",
+            "A_gamma2",
+            "A_gamma3",
+            "prices0",
+            "prices1",
+        ],
     )
+
+    row = df.iloc[0]
+    assert int(row["number"]) == int(number)
+    assert int(row["value"]) == int(value)
+    assert int(row["D"]) == int(state["D"])
+    assert int(row["total_supply"]) == int(state["total_supply"])
+    assert int(row["balances0"]) == int(state["balances"][0])
+    assert int(row["balances1"]) == int(state["balances"][1])
+    assert int(row["balances2"]) == int(state["balances"][2])
+    assert int(row["A_gamma0"]) == int(state["A_gamma"][0])
+    assert int(row["A_gamma1"]) == int(state["A_gamma"][1])
+    assert int(row["A_gamma2"]) == int(state["A_gamma"][2])
+    assert int(row["A_gamma3"]) == int(state["A_gamma"][3])
+    assert int(row["prices0"]) == int(state["prices"][0])
+    assert int(row["prices1"]) == int(state["prices"][1])

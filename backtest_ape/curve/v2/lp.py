@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 
 from ape import chain, project
@@ -166,20 +167,15 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         """
         pass
 
-    def record(
-        self, df: pd.DataFrame, number: int, state: Mapping, value: int
-    ) -> pd.DataFrame:
+    def record(self, path: str, number: int, state: Mapping, value: int):
         """
         Records the value and possibly some state at the given block.
 
         Args:
-            df (:class:`pd.DataFrame`): The dataframe to record in.
+            path (str): The path to the csv file to write the record to.
             number (int): The block number.
             state (Mapping): The state of references at block number.
             value (int): The value of the backtester for the state.
-
-        Returns:
-            :class:`pd.DataFrame`: The updated dataframe with the new record.
         """
         data = {"number": number, "value": value}
         data.update(state)
@@ -200,8 +196,7 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         # update data for unfolded list items
         data.update(updates)
 
-        row = pd.DataFrame(data={k: [v] for k, v in data.items()})
-        if df.empty:
-            return row
-
-        return pd.concat([df, row])
+        # append row to csv file
+        header = not os.path.exists(path)
+        df = pd.DataFrame(data={k: [v] for k, v in data.items()})
+        df.to_csv(path, index=False, mode="a", header=header)
