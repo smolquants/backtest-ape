@@ -25,6 +25,7 @@ dependencies = [
   "eth-ape>=0.5.8,<0.6.0",
   "pandas",
   "scipy",
+  "matplotlib",
   "numpy>=1.21,<2.0",
   "hypothesis>=6.2.0,<7.0",  # Strategy-based fuzzer
   "typing-inspect==0.8.0",
