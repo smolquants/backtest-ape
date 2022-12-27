@@ -122,7 +122,6 @@ version.py
 
 # Ape stuff
 .build/
-scripts/results/
 
 # node
 node_modules
