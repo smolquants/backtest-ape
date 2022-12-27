@@ -53,7 +53,8 @@ def main():
     path = f"scripts/results/{runner_cls_name}-{int(time())}.csv"
     start = click.prompt("Start block number", type=int)
     stop = click.prompt("Stop block number", type=int, default=-1)
+    step = click.prompt("Step size", type=int, default=1)
     if stop < 0:
         stop = None
 
-    runner.backtest(path, start, stop)
+    runner.backtest(path, start, stop, step)

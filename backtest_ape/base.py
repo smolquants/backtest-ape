@@ -94,6 +94,7 @@ class BaseRunner(BaseModel):
         path: str,
         start: int,
         stop: Optional[int] = None,
+        step: Optional[int] = 1,
     ):
         """
         Backtests strategy between start and stop blocks.
@@ -101,7 +102,8 @@ class BaseRunner(BaseModel):
         Args:
             path (str): The path to the csv file to write the record to.
             start (int): The start block number.
-            stop (Optional[int]): Then stop block number.
+            stop (Optional[int]): The stop block number.
+            step (Optional[int]): The step interval size.
 
         Returns:
             :class:`pandas.DataFrame`: The generated backtester values.
@@ -118,8 +120,10 @@ class BaseRunner(BaseModel):
         click.echo(f"Initializing state of mocks from block number {start} ...")
         self.init_mocks_state(self.get_refs_state(start))
 
-        click.echo(f"Iterating from block number {start+1} to {stop} ...")
-        for number in range(start + 1, stop, 1):
+        click.echo(
+            f"Iterating from block number {start+1} to {stop} with step size {step} ..."
+        )
+        for number in range(start + 1, stop, step):
             click.echo(f"Processing block {number} ...")
 
             # get the state of refs for vars care about at block.number
