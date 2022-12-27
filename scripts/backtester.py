@@ -3,7 +3,6 @@ import backtest_ape
 
 from ape import networks
 from ast import literal_eval
-from time import time
 from typing_inspect import get_origin
 
 
@@ -52,10 +51,9 @@ def main():
     # TODO: choice for back or forward testing
     start = click.prompt("Start block number", type=int)
     stop = click.prompt("Stop block number", type=int, default=-1)
+    step = click.prompt("Step size", type=int, default=1)
+    path = f"scripts/results/{runner_cls_name}_{start}_{stop}_{step}.csv"
     if stop < 0:
         stop = None
 
-    df = runner.backtest(start, stop)
-
-    # save df results to csv
-    df.to_csv(f"scripts/results/{runner_cls_name}-{int(time())}.csv")
+    runner.backtest(path, start, stop, step)

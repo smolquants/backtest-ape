@@ -8,8 +8,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ['3.8', '3.9', '3.10']
+        os: [ubuntu-latest]
+        python-version: ['3.8']
 
     steps:
     - uses: actions/checkout@v3
@@ -29,7 +29,10 @@ jobs:
 
     - name: Install hatch
       run: pip install hatch
-      
+
+    - name: Create hatch env
+      run: hatch env create
+            
     - name: Build with hatch
       run: hatch build
     

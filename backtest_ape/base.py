@@ -4,18 +4,25 @@ import pandas as pd
 from ape import Contract, chain
 from ape.contracts import ContractInstance
 from ape.api.accounts import AccountAPI
-from pydantic import BaseModel
-from typing import Any, Mapping, Optional
+from pydantic import BaseModel, validator
+from typing import Any, ClassVar, List, Mapping, Optional
 
 
 class BaseRunner(BaseModel):
-    ref_addrs: Optional[Mapping[str, str]] = {}
+    ref_addrs: Mapping[str, str]
 
+    _ref_keys: ClassVar[List[str]] = []
     _refs: Mapping[str, ContractInstance]
     _mocks: Mapping[str, ContractInstance]
     _acc: AccountAPI
     _backtester: ContractInstance
     _initialized: bool = False
+
+    @validator("ref_addrs")
+    def ref_addrs_has_keys(cls, v):
+        if set(cls._ref_keys) > set(v.keys()):
+            raise ValueError("cls._ref_keys not subset of ref_addrs.keys()")
+        return v
 
     def __init__(self, **data: Any):
         """
@@ -70,34 +77,33 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("update_strategy not implemented.")
 
-    def record(
-        self, df: pd.DataFrame, number: int, state: Mapping, value: int
-    ) -> pd.DataFrame:
+    def record(self, path: str, number: int, state: Mapping, value: int):
         """
         Records the value and possibly some state at the given block.
 
         Args:
-            df (:class:`pd.DataFrame`): The dataframe to record in.
+            path (str): The path to the csv file to write the record to.
             number (int): The block number.
             state (Mapping): The state of references at block number.
             value (int): The value of the backtester for the state.
-
-        Returns:
-            :class:`pd.DataFrame`: The updated dataframe with the new record.
         """
         raise NotImplementedError("record not implemented.")
 
     def backtest(
         self,
+        path: str,
         start: int,
         stop: Optional[int] = None,
-    ) -> pd.DataFrame:
+        step: Optional[int] = 1,
+    ):
         """
         Backtests strategy between start and stop blocks.
 
         Args:
+            path (str): The path to the csv file to write the record to.
             start (int): The start block number.
-            stop (Optional[int]): Then stop block number.
+            stop (Optional[int]): The stop block number.
+            step (Optional[int]): The step interval size.
 
         Returns:
             :class:`pandas.DataFrame`: The generated backtester values.
@@ -114,9 +120,10 @@ class BaseRunner(BaseModel):
         click.echo(f"Initializing state of mocks from block number {start} ...")
         self.init_mocks_state(self.get_refs_state(start))
 
-        click.echo(f"Iterating from block number {start+1} to {stop} ...")
-        df = pd.DataFrame()
-        for number in range(start + 1, stop, 1):
+        click.echo(
+            f"Iterating from block number {start+1} to {stop} with step size {step} ..."
+        )
+        for number in range(start + 1, stop, step):
             click.echo(f"Processing block {number} ...")
 
             # get the state of refs for vars care about at block.number
@@ -132,9 +139,7 @@ class BaseRunner(BaseModel):
             # record value function on backtester and any additional state
             value = self._backtester.value()
             click.echo(f"Backtester value at block {number}: {value}")
-            df = self.record(df, number, refs_state, value)
-
-        return df
+            self.record(path, number, refs_state, value)
 
     def forwardtest(self, data: pd.DataFrame) -> pd.DataFrame:
         """
