@@ -1,14 +1,12 @@
-import click
+from typing import Any, ClassVar, List
 
+import click
 from ape import Contract
+
 from backtest_ape.base import BaseRunner
+from backtest_ape.curve.v2.setup import deploy_mock_lp, deploy_mock_pool
 from backtest_ape.setup import deploy_mock_erc20
 from backtest_ape.utils import get_test_account
-from backtest_ape.curve.v2.setup import (
-    deploy_mock_pool,
-    deploy_mock_lp,
-)
-from typing import Any, ClassVar, List
 
 
 class BaseCurveV2Runner(BaseRunner):

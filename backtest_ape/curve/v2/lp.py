@@ -1,10 +1,11 @@
 import os
-import pandas as pd
+from typing import Any, List, Mapping, Optional
 
+import pandas as pd
 from ape import chain, project
-from backtest_ape.curve.v2.base import BaseCurveV2Runner
 from pydantic import validator
-from typing import Any, List, Mapping
+
+from backtest_ape.curve.v2.base import BaseCurveV2Runner
 
 
 class CurveV2LPRunner(BaseCurveV2Runner):
@@ -159,11 +160,14 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         else:
             mock_lp.burnFrom(self._acc.address, abs(d_supply), sender=self._acc)
 
-    def update_strategy(self):
+    def update_strategy(self, txs: Optional[List] = None):
         """
         Updates the strategy being backtested through backtester contract.
 
         NOTE: Passing means passive LP.
+
+        Args:
+            txs (Optional[List]): The reference transactions in current block.
         """
         pass
 

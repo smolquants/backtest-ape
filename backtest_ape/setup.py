@@ -1,6 +1,6 @@
 from ape import project
-from ape.contracts import ContractInstance
 from ape.api.accounts import AccountAPI
+from ape.contracts import ContractInstance
 
 
 def deploy_mock_erc20(

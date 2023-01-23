@@ -1,11 +1,11 @@
+from typing import Any, ClassVar, List, Mapping, Optional
+
 import click
 import pandas as pd
-
 from ape import Contract, chain
-from ape.contracts import ContractInstance
 from ape.api.accounts import AccountAPI
+from ape.contracts import ContractInstance
 from pydantic import BaseModel, validator
-from typing import Any, ClassVar, List, Mapping, Optional
 
 
 class BaseRunner(BaseModel):
@@ -71,9 +71,22 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("set_mocks_state not implemented.")
 
-    def update_strategy(self):
+    def init_strategy(self, number: int):
+        """
+        Initializes the strategy being backtested through backtester contract
+        at the given block.
+
+        Args:
+            number (int): The block number.
+        """
+        raise NotImplementedError("init_strategy not implemented.")
+
+    def update_strategy(self, txs: Optional[List] = None):
         """
         Updates the strategy being backtested through backtester contract.
+
+        Args:
+            txs (Optional[List]): The reference transactions in current block.
         """
         raise NotImplementedError("update_strategy not implemented.")
 
@@ -89,6 +102,18 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("record not implemented.")
 
+    def get_ref_txs(self, number: int) -> List:
+        """
+        Gets the transactions at given block.
+
+        Args:
+            number (int): The block number to reference.
+
+        Returns:
+            List: The transactions in block.
+        """
+        return chain.blocks[number].transactions
+
     def backtest(
         self,
         path: str,
@@ -97,16 +122,13 @@ class BaseRunner(BaseModel):
         step: Optional[int] = 1,
     ):
         """
-        Backtests strategy between start and stop blocks.
+        Backtests strategy between start and stop blocks using mocks.
 
         Args:
             path (str): The path to the csv file to write the record to.
             start (int): The start block number.
             stop (Optional[int]): The stop block number.
             step (Optional[int]): The step interval size.
-
-        Returns:
-            :class:`pandas.DataFrame`: The generated backtester values.
         """
         if not self._initialized:
             raise Exception("runner not setup.")
@@ -140,6 +162,55 @@ class BaseRunner(BaseModel):
             value = self._backtester.value()
             click.echo(f"Backtester value at block {number}: {value}")
             self.record(path, number, refs_state, value)
+
+    def replay(
+        self,
+        path: str,
+        start: int,
+        stop: Optional[int] = None,
+    ):
+        """
+        Replays strategy against full history of chain between start and
+        stop blocks.
+
+        Args:
+            path (str): The path to the csv file to write the record to.
+            start (int): The start block number.
+            stop (Optional[int]): The stop block number.
+        """
+        if not self._initialized:
+            raise Exception("runner not setup.")
+
+        if stop is None:
+            stop = chain.blocks.head.number
+
+        if start > stop:
+            raise ValueError("start block after stop block.")
+
+        click.echo(f"Initializing state of strategy at block number {start} ...")
+        self.init_strategy(start)
+
+        # TODO: up the block gas limit to ensure inclusion of strategy updates
+        # TODO: noting that will change behavior of contracts with any
+        # TODO: block.gaslimit references
+        click.echo(
+            f"Iterating from block number {start+1} to {stop} with step size 1 ..."
+        )
+        for number in range(start + 1, stop, 1):
+            click.echo(f"Processing block {number} ...")
+
+            # get the ref network txs at block.number
+            ref_txs = self.get_ref_txs(number)
+            click.echo(f"Number of ref txs count at block {number}: {len(ref_txs)}")
+
+            # update backtested strategy based off current chain state
+            # and ref txs for current block
+            self.update_strategy(ref_txs)
+
+            # record value function on backtester
+            value = self._backtester.value()
+            click.echo(f"Backtester value at block {number}: {value}")
+            self.record(path, number, {}, value)
 
     def forwardtest(self, data: pd.DataFrame) -> pd.DataFrame:
         """

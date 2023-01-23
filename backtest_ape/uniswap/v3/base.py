@@ -1,15 +1,16 @@
-import click
+from typing import Any, ClassVar, List
 
+import click
 from ape import Contract
+
 from backtest_ape.base import BaseRunner
 from backtest_ape.setup import deploy_mock_erc20
-from backtest_ape.utils import get_test_account
 from backtest_ape.uniswap.v3.setup import (
+    create_mock_pool,
     deploy_mock_position_manager,
     deploy_mock_univ3_factory,
-    create_mock_pool,
 )
-from typing import Any, ClassVar, List
+from backtest_ape.utils import get_test_account
 
 
 class BaseUniswapV3Runner(BaseRunner):

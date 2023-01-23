@@ -1,13 +1,13 @@
 import ape
-import pytest
 import numpy as np
-
+import pytest
 from ape.contracts import ContractInstance
+
 from backtest_ape.setup import deploy_mock_erc20
 from backtest_ape.uniswap.v3.setup import (
+    create_mock_pool,
     deploy_mock_position_manager,
     deploy_mock_univ3_factory,
-    create_mock_pool,
 )
 
 

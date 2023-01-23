@@ -1,5 +1,4 @@
 import pytest
-
 from ape import Contract, project
 
 

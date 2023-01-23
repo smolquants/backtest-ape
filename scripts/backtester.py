@@ -1,9 +1,10 @@
-import click
-import backtest_ape
-
-from ape import networks
 from ast import literal_eval
+
+import click
+from ape import networks
 from typing_inspect import get_origin
+
+import backtest_ape
 
 
 def main():

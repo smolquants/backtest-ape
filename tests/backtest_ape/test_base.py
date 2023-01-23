@@ -1,5 +1,6 @@
 import pytest
 from ape import Contract
+
 from backtest_ape.base import BaseRunner
 
 
