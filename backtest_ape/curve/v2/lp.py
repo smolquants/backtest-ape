@@ -1,5 +1,5 @@
 import os
-from typing import Any, List, Mapping, Optional
+from typing import Any, List, Mapping
 
 import pandas as pd
 from ape import chain, project
@@ -160,14 +160,11 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         else:
             mock_lp.burnFrom(self._acc.address, abs(d_supply), sender=self._acc)
 
-    def update_strategy(self, txs: Optional[List] = None):
+    def update_strategy(self):
         """
         Updates the strategy being backtested through backtester contract.
 
         NOTE: Passing means passive LP.
-
-        Args:
-            txs (Optional[List]): The reference transactions in current block.
         """
         pass
 

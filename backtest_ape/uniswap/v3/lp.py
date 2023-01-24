@@ -1,5 +1,5 @@
 import os
-from typing import List, Mapping, Optional
+from typing import Mapping
 
 import pandas as pd
 from ape import chain, project
@@ -175,14 +175,11 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         ]
         mock_pool.calls(datas)
 
-    def update_strategy(self, txs: Optional[List] = None):
+    def update_strategy(self):
         """
         Updates the strategy being backtested through backtester contract.
 
         NOTE: Passing means passive LP.
-
-        Args:
-            txs (Optional[List]): The reference transactions in current block.
         """
         pass
 

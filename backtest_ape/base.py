@@ -81,14 +81,20 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("init_strategy not implemented.")
 
-    def update_strategy(self, txs: Optional[List] = None):
+    def update_strategy(self):
         """
         Updates the strategy being backtested through backtester contract.
-
-        Args:
-            txs (Optional[List]): The reference transactions in current block.
         """
         raise NotImplementedError("update_strategy not implemented.")
+
+    def get_update_txs(self) -> List:
+        """
+        Gets the update transactions used to update strategy.
+
+        Returns:
+            List: The transactions.
+        """
+        raise NotImplementedError("get_update_txs not implemented.")
 
     def record(self, path: str, number: int, state: Mapping, value: int):
         """
@@ -113,6 +119,16 @@ class BaseRunner(BaseModel):
             List: The transactions in block.
         """
         return chain.blocks[number].transactions
+
+    def submit_txs(self, txs: List):
+        """
+        Submits list of transactions.
+
+        Args:
+            txs (List): The transactions.
+        """
+        for tx in txs:
+            _ = chain.provider.send_transaction(tx)
 
     def backtest(
         self,
@@ -173,6 +189,10 @@ class BaseRunner(BaseModel):
         Replays strategy against full history of chain between start and
         stop blocks.
 
+        WARNING: Contracts that rely on block.number *won't* replay
+        as they would have historically as this function will mine
+        a new block for each historical transaction when using mainnet-fork.
+
         Args:
             path (str): The path to the csv file to write the record to.
             start (int): The start block number.
@@ -190,27 +210,33 @@ class BaseRunner(BaseModel):
         click.echo(f"Initializing state of strategy at block number {start} ...")
         self.init_strategy(start)
 
-        # TODO: up the block gas limit to ensure inclusion of strategy updates
-        # TODO: noting that will change behavior of contracts with any
-        # TODO: block.gaslimit references
         click.echo(
             f"Iterating from block number {start+1} to {stop} with step size 1 ..."
         )
         for number in range(start + 1, stop, 1):
             click.echo(f"Processing block {number} ...")
 
+            # get the state of refs for vars care about at block.number
+            refs_state = self.get_refs_state(number)
+            click.echo(f"State of refs at block {number}: {refs_state}")
+
             # get the ref network txs at block.number
             ref_txs = self.get_ref_txs(number)
-            click.echo(f"Number of ref txs count at block {number}: {len(ref_txs)}")
+            click.echo(f"Number of ref txs at block {number}: {len(ref_txs)}")
 
             # update backtested strategy based off current chain state
             # and ref txs for current block
-            self.update_strategy(ref_txs)
+            update_txs = self.get_update_txs()
+            click.echo(f"Number of update txs for block {number}: {len(update_txs)}")
+
+            # submit bundle of ref + update txs
+            txs = ref_txs + update_txs
+            self.submit_txs(txs)
 
             # record value function on backtester
             value = self._backtester.value()
             click.echo(f"Backtester value at block {number}: {value}")
-            self.record(path, number, {}, value)
+            self.record(path, number, refs_state, value)
 
     def forwardtest(self, data: pd.DataFrame) -> pd.DataFrame:
         """
