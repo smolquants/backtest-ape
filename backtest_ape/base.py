@@ -4,6 +4,7 @@ import click
 import pandas as pd
 from ape import Contract, chain
 from ape.api.accounts import AccountAPI
+from ape.api.transactions import TransactionAPI
 from ape.contracts import ContractInstance
 from pydantic import BaseModel, validator
 
@@ -13,6 +14,7 @@ class BaseRunner(BaseModel):
 
     _ref_keys: ClassVar[List[str]] = []
     _refs: Mapping[str, ContractInstance]
+    _ref_txs: Mapping[int, List[TransactionAPI]]
     _mocks: Mapping[str, ContractInstance]
     _acc: AccountAPI
     _backtester: ContractInstance
@@ -108,17 +110,23 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("record not implemented.")
 
-    def get_ref_txs(self, number: int) -> List:
+    def load_ref_txs(self, number: int):
         """
-        Gets the transactions at given block.
+        Loads the reference transactions from the given block.
 
         Args:
-            number (int): The block number to reference.
-
-        Returns:
-            List: The transactions in block.
+            number (int): The block number.
         """
-        return chain.blocks[number].transactions
+        self._ref_txs[number] = chain.blocks[number].transactions
+
+    def get_ref_txs(self, number: int) -> List[TransactionAPI]:
+        """
+        Get the cached reference transactions for the given block.
+
+        Args:
+            number (int): The block number.
+        """
+        return self._ref_txs[number]
 
     def submit_txs(self, txs: List):
         """
@@ -191,7 +199,7 @@ class BaseRunner(BaseModel):
 
         WARNING: Contracts that rely on block.number *won't* replay
         as they would have historically as this function will mine
-        a new block for each historical transaction when using mainnet-fork.
+        a new block for each historical transaction.
 
         Args:
             path (str): The path to the csv file to write the record to.
@@ -206,6 +214,16 @@ class BaseRunner(BaseModel):
 
         if start > stop:
             raise ValueError("start block after stop block.")
+
+        click.echo(
+            f"Loading historical txs from {start+1} to {stop} with step size 1 ..."
+        )
+        for number in range(start + 1, stop, 1):
+            click.echo(f"Loading from block {number} ...")
+            self.load_ref_txs(number)
+
+        click.echo(f"Resetting fork to block number {start} ...")
+        chain.provider.reset_fork(start)
 
         click.echo(f"Initializing state of strategy at block number {start} ...")
         self.init_strategy(start)
