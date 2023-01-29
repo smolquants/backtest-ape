@@ -15,7 +15,7 @@ def number():
 
 @pytest.fixture
 def transactions(number):
-    return chain.blocks[number].transactions
+    yield chain.blocks[number].transactions
 
 
 @pytest.fixture
@@ -56,15 +56,27 @@ def test_get_ref_txs(number, transactions, runner):
     assert ref_txs == transactions
 
 
-def test_submit_tx(number, transactions, runner):
+def test_submit_tx(number, transactions, runner, WETH9):
     head_number = chain.blocks.head.number
     chain.provider.reset_fork(number - 1)
 
-    tx = transactions[0]  # know this does *not* revert
+    # cache WETH9 balance of pool swap thru in tx
+    pool_addr = "0xC1409A2c5673299fB15Da5f03c27EB1aC88f7D8C"
+    pool_weth_bal_prior = WETH9.balanceOf(pool_addr)
+
+    # SEE: https://etherscan.io/tx/0xdd05e6aa918593db4c777723efbdd55fbd92e0d213f43b6013d97885fc2abe23  # noqa: E501
+    tx = transactions[114]  # know this does *not* revert
     runner.submit_tx(tx)
     assert chain.blocks[number].transactions == [tx]
 
+    # check Uni V3 swap tx altered pool balance of WETH9
+    pool_weth_bal_post = WETH9.balanceOf(pool_addr)
+    actual_delta_bal = pool_weth_bal_prior - pool_weth_bal_post
+    expect_delta_bal = 85681526175119496
+    assert actual_delta_bal == expect_delta_bal
+
     # NOTE: avoids BlockNotFound exceptions with isolation fixture
+    # TODO: fix isolation fixture for this
     chain.provider.reset_fork(head_number)
 
 
@@ -80,6 +92,21 @@ def test_submit_txs(number, transactions, runner):
         assert chain.blocks[number + i].transactions == [txs[i]]
 
     # NOTE: avoids BlockNotFound exceptions with isolation fixture
+    # TODO: fix isolation fixture for this
+    chain.provider.reset_fork(head_number)
+
+
+def test_submit_tx_when_reverts(number, transactions, runner):
+    head_number = chain.blocks.head.number
+    chain.provider.reset_fork(number - 1)
+
+    # check reverted tx included in block (fails silently)
+    tx = transactions[84]  # know this *does* revert
+    runner.submit_tx(tx)
+    assert chain.blocks[number].transactions == [tx]
+
+    # NOTE: avoids BlockNotFound exceptions with isolation fixture
+    # TODO: fix isolation fixture for this
     chain.provider.reset_fork(head_number)
 
 
