@@ -1,10 +1,11 @@
 import os
-from typing import Any, List, Mapping
+from typing import Any, List, Mapping, Optional
 
 import pandas as pd
 from ape import chain
 from pydantic import validator
 
+from backtest_ape.utils import get_block_identifier
 from backtest_ape.curve.v2.base import BaseCurveV2Runner
 
 
@@ -45,36 +46,38 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         self.deploy_strategy(*[self._mocks["pool"].address, self.num_coins])
         self._initialized = True
 
-    def get_refs_state(self, number: int) -> Mapping:
+    def get_refs_state(self, number: Optional[int] = None) -> Mapping:
         """
         Gets the state of references at given block.
 
         Args:
-            number (int): The block number to reference.
+            number (int): The block number. If None, then last block
+                from current provider chain.
 
         Returns:
             Mapping: The state of references at block.
         """
+        block_identifier = get_block_identifier(number)
         ref_pool = self._refs["pool"]
         ref_lp = self._refs["lp"]
         state = {}
 
         num_coins = self.num_coins
         state["balances"] = [
-            ref_pool.balances(i, block_identifier=number) for i in range(num_coins)
+            ref_pool.balances(i, block_identifier=block_identifier) for i in range(num_coins)
         ]
-        state["D"] = ref_pool.D(block_identifier=number)
+        state["D"] = ref_pool.D(block_identifier=block_identifier)
         state["A_gamma"] = [
-            ref_pool.initial_A_gamma(block_identifier=number),
-            ref_pool.future_A_gamma(block_identifier=number),
-            ref_pool.initial_A_gamma_time(block_identifier=number),
-            ref_pool.future_A_gamma_time(block_identifier=number),
+            ref_pool.initial_A_gamma(block_identifier=block_identifier),
+            ref_pool.future_A_gamma(block_identifier=block_identifier),
+            ref_pool.initial_A_gamma_time(block_identifier=block_identifier),
+            ref_pool.future_A_gamma_time(block_identifier=block_identifier),
         ]
         state["prices"] = [
-            ref_pool.price_oracle(i, block_identifier=number)
+            ref_pool.price_oracle(i, block_identifier=block_identifier)
             for i in range(num_coins - 1)
         ]
-        state["total_supply"] = ref_lp.totalSupply(block_identifier=number)
+        state["total_supply"] = ref_lp.totalSupply(block_identifier=block_identifier)
         return state
 
     def init_mocks_state(self, state: Mapping):

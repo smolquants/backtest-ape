@@ -1,10 +1,11 @@
 import os
-from typing import Mapping
+from typing import Mapping, Optional
 
 import pandas as pd
 from ape import chain
 from hexbytes import HexBytes
 
+from backtest_ape.utils import get_block_identifier
 from backtest_ape.uniswap.v3.base import BaseUniswapV3Runner
 
 
@@ -31,32 +32,34 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         self.deploy_strategy(*[self._mocks["manager"].address])
         self._initialized = True
 
-    def get_refs_state(self, number: int) -> Mapping:
+    def get_refs_state(self, number: Optional[int] = None) -> Mapping:
         """
         Gets the state of references at given block.
 
         Args:
-            block_number (int): The block number to reference.
+            block_number (int): The block number to reference. If None, then
+                last block from current provider chain.
 
         Returns:
             Mapping: The state of references at block.
         """
+        block_identifier = get_block_identifier(number)
         ref_pool = self._refs["pool"]
         state = {}
 
-        state["slot0"] = ref_pool.slot0(block_identifier=number)
-        state["liquidity"] = ref_pool.liquidity(block_identifier=number)
+        state["slot0"] = ref_pool.slot0(block_identifier=block_identifier)
+        state["liquidity"] = ref_pool.liquidity(block_identifier=block_identifier)
         state["fee_growth_global0_x128"] = ref_pool.feeGrowthGlobal0X128(
-            block_identifier=number
+            block_identifier=block_identifier
         )
         state["fee_growth_global1_x128"] = ref_pool.feeGrowthGlobal1X128(
-            block_identifier=number
+            block_identifier=block_identifier
         )
         state["tick_info_lower"] = ref_pool.ticks(
-            self.tick_lower, block_identifier=number
+            self.tick_lower, block_identifier=block_identifier
         )
         state["tick_info_upper"] = ref_pool.ticks(
-            self.tick_upper, block_identifier=number
+            self.tick_upper, block_identifier=block_identifier
         )
         return state
 

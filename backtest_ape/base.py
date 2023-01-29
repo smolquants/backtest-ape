@@ -8,6 +8,8 @@ from ape.api.transactions import TransactionAPI
 from ape.contracts import ContractInstance
 from pydantic import BaseModel, validator
 
+from backtest_ape.utils import get_block_identifier
+
 
 class BaseRunner(BaseModel):
     ref_addrs: Mapping[str, str]
@@ -56,12 +58,13 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("setup not implemented.")
 
-    def get_refs_state(self, number: int) -> Mapping:
+    def get_refs_state(self, number: Optional[int] = None) -> Mapping:
         """
         Gets the state of references at given block.
 
         Args:
-            number (int): The block number to reference.
+            number (int): The block number. If None, then last block
+                from current provider chain.
 
         Returns:
             Mapping: The state of references at block.
@@ -140,23 +143,27 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("record not implemented.")
 
-    def load_ref_txs(self, number: int):
+    def load_ref_txs(self, number: Optional[int] = None):
         """
         Loads the reference transactions from the given block.
 
         Args:
-            number (int): The block number.
+            number (int): The block number. If None, then last block
+                from current provider chain.
         """
-        self._ref_txs[number] = chain.blocks[number].transactions
+        block_identifier = get_block_identifier(number)
+        self._ref_txs[block_identifier] = chain.blocks[block_identifier].transactions
 
-    def get_ref_txs(self, number: int) -> List[TransactionAPI]:
+    def get_ref_txs(self, number: Optional[int] = None) -> List[TransactionAPI]:
         """
         Get the cached reference transactions for the given block.
 
         Args:
-            number (int): The block number.
+            number (Optional[int]): The block number.  If None, then last block
+                from current provider chain.
         """
-        return self._ref_txs[number]
+        block_identifier = get_block_identifier(number)
+        return self._ref_txs[block_identifier]
 
     def submit_txs(self, txs: List):
         """
@@ -264,11 +271,11 @@ class BaseRunner(BaseModel):
         for number in range(start + 1, stop, 1):
             click.echo(f"Processing block {number} ...")
 
-            # get the state of refs for vars care about at block.number
-            refs_state = self.get_refs_state(number)
+            # get the state of refs for vars care about at current chain state
+            refs_state = self.get_refs_state()
             click.echo(f"State of refs at block {number}: {refs_state}")
 
-            # get the ref network txs at block.number
+            # get the ref network txs at historical block.number
             ref_txs = self.get_ref_txs(number)
             click.echo(f"Number of ref txs at block {number}: {len(ref_txs)}")
 
