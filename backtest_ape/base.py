@@ -6,6 +6,7 @@ from ape import Contract, chain, project
 from ape.api.accounts import AccountAPI
 from ape.api.transactions import TransactionAPI
 from ape.contracts import ContractInstance
+from ape.exceptions import ContractLogicError
 from pydantic import BaseModel, validator
 
 from backtest_ape.utils import get_block_identifier
@@ -16,7 +17,7 @@ class BaseRunner(BaseModel):
 
     _ref_keys: ClassVar[List[str]] = []
     _refs: Mapping[str, ContractInstance]
-    _ref_txs: Mapping[int, List[TransactionAPI]]
+    _ref_txs: Mapping[int, List[TransactionAPI]] = {}
     _mocks: Mapping[str, ContractInstance]
     _acc: Optional[AccountAPI] = None
     _backtester_name: ClassVar[str]
@@ -165,15 +166,28 @@ class BaseRunner(BaseModel):
         block_identifier = get_block_identifier(number)
         return self._ref_txs[block_identifier]
 
-    def submit_txs(self, txs: List):
+    def submit_tx(self, tx: TransactionAPI):
         """
-        Submits list of transactions.
+        Submits a transaction, silently handling reverts.
+
+        Args:
+            tx (TransactionAPI): The transaction.
+        """
+        try:
+            _ = chain.provider.send_transaction(tx)
+        except ContractLogicError:
+            # don't include txs that revert so fail silently
+            pass
+
+    def submit_txs(self, txs: List[TransactionAPI]):
+        """
+        Submits list of transactions, silently handling reverts.
 
         Args:
             txs (List): The transactions.
         """
         for tx in txs:
-            _ = chain.provider.send_transaction(tx)
+            self.submit_tx(tx)
 
     def backtest(
         self,
@@ -236,7 +250,10 @@ class BaseRunner(BaseModel):
 
         WARNING: Contracts that rely on block.number *won't* replay
         as they would have historically as this function will mine
-        a new block for each historical transaction.
+        a new block for each historical transaction. Further, any
+        strategy updates that unintentionally cause reverts for
+        txs from the actual chain history will cause the strategy to
+        not replay as it would have historically.
 
         Args:
             path (str): The path to the csv file to write the record to.
