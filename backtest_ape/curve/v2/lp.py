@@ -64,7 +64,8 @@ class CurveV2LPRunner(BaseCurveV2Runner):
 
         num_coins = self.num_coins
         state["balances"] = [
-            ref_pool.balances(i, block_identifier=block_identifier) for i in range(num_coins)
+            ref_pool.balances(i, block_identifier=block_identifier)
+            for i in range(num_coins)
         ]
         state["D"] = ref_pool.D(block_identifier=block_identifier)
         state["A_gamma"] = [
