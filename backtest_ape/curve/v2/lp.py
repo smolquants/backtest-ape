@@ -2,7 +2,7 @@ import os
 from typing import Any, List, Mapping
 
 import pandas as pd
-from ape import chain, project
+from ape import chain
 from pydantic import validator
 
 from backtest_ape.curve.v2.base import BaseCurveV2Runner
@@ -10,6 +10,7 @@ from backtest_ape.curve.v2.base import BaseCurveV2Runner
 
 class CurveV2LPRunner(BaseCurveV2Runner):
     amounts: List[int]
+    _backtester_name = "CurveV2LPBacktest"
 
     @validator("amounts")
     def amounts_len_equals_num_coins(cls, v, values, **kwargs):
@@ -41,10 +42,7 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         super().setup()
 
         # deploy the backtester
-        pool = self._mocks["pool"]
-        self._backtester = project.CurveV2LPBacktest.deploy(
-            pool.address, self.num_coins, sender=self._acc
-        )
+        self.deploy_strategy(*[self._mocks["pool"].address, self.num_coins])
         self._initialized = True
 
     def get_refs_state(self, number: int) -> Mapping:
@@ -101,7 +99,7 @@ class CurveV2LPRunner(BaseCurveV2Runner):
             ecosystem.encode_transaction(
                 mock_coin.address,
                 mock_coin.mint.abis[0],
-                self._backtester.address,
+                self.backtester.address,
                 self.amounts[i],
             ).data
             for i, mock_coin in enumerate(mock_coins)
@@ -116,10 +114,10 @@ class CurveV2LPRunner(BaseCurveV2Runner):
             for i, mock_coin in enumerate(mock_coins)
         ]
         values = [0 for _ in range(2 * self.num_coins)]
-        self._backtester.multicall(targets, datas, values, sender=self._acc)
+        self.backtester.multicall(targets, datas, values, sender=self.acc)
 
         # then mint the LP position
-        self._backtester.execute(
+        self.backtester.execute(
             mock_pool.address,
             ecosystem.encode_transaction(
                 mock_pool.address,
@@ -128,12 +126,12 @@ class CurveV2LPRunner(BaseCurveV2Runner):
                 0,
             ).data,
             0,
-            sender=self._acc,
+            sender=self.acc,
         )
 
         # burn the equivalent amount of minted LP tokens from runner acc
-        minted = mock_lp.balanceOf(self._backtester.address)
-        mock_lp.burnFrom(self._acc.address, minted, sender=self._acc)
+        minted = mock_lp.balanceOf(self.backtester.address)
+        mock_lp.burnFrom(self.acc.address, minted, sender=self.acc)
 
         # set the mock state again so liquidity changes use ref state
         self.set_mocks_state(state)
@@ -147,18 +145,18 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         """
         # update mock pool for state attrs
         mock_pool = self._mocks["pool"]
-        mock_pool.set_balances(state["balances"], sender=self._acc)
-        mock_pool.set_D(state["D"], sender=self._acc)
-        mock_pool.set_A_gamma(state["A_gamma"], sender=self._acc)
-        mock_pool.set_packed_prices(state["prices"], sender=self._acc)
+        mock_pool.set_balances(state["balances"], sender=self.acc)
+        mock_pool.set_D(state["D"], sender=self.acc)
+        mock_pool.set_A_gamma(state["A_gamma"], sender=self.acc)
+        mock_pool.set_packed_prices(state["prices"], sender=self.acc)
 
         # update mock LP token supply for state attrs
         mock_lp = self._mocks["lp"]
         d_supply = state["total_supply"] - mock_lp.totalSupply()
         if d_supply >= 0:
-            mock_lp.mint(self._acc.address, abs(d_supply), sender=self._acc)
+            mock_lp.mint(self.acc.address, abs(d_supply), sender=self.acc)
         else:
-            mock_lp.burnFrom(self._acc.address, abs(d_supply), sender=self._acc)
+            mock_lp.burnFrom(self.acc.address, abs(d_supply), sender=self.acc)
 
     def update_strategy(self):
         """

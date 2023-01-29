@@ -2,7 +2,7 @@ from typing import Any, ClassVar, List, Mapping, Optional
 
 import click
 import pandas as pd
-from ape import Contract, chain
+from ape import Contract, chain, project
 from ape.api.accounts import AccountAPI
 from ape.api.transactions import TransactionAPI
 from ape.contracts import ContractInstance
@@ -16,8 +16,9 @@ class BaseRunner(BaseModel):
     _refs: Mapping[str, ContractInstance]
     _ref_txs: Mapping[int, List[TransactionAPI]]
     _mocks: Mapping[str, ContractInstance]
-    _acc: AccountAPI
-    _backtester: ContractInstance
+    _acc: Optional[AccountAPI] = None
+    _backtester_name: ClassVar[str]
+    _backtester: Optional[ContractInstance] = None
     _initialized: bool = False
 
     @validator("ref_addrs")
@@ -37,6 +38,18 @@ class BaseRunner(BaseModel):
     class Config:
         underscore_attrs_are_private = True
 
+    @property
+    def acc(self):
+        if self._acc is None:
+            raise Exception("runner account not set.")
+        return self._acc
+
+    @property
+    def backtester(self):
+        if self._backtester is None:
+            raise Exception("backtester strategy not deployed.")
+        return self._backtester
+
     def setup(self):
         """
         Sets up the runner for testing.
@@ -55,6 +68,12 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("get_refs_state not implemented.")
 
+    def deploy_mocks(self):
+        """
+        Deploys the mock contracts.
+        """
+        raise NotImplementedError("deploy_mocks not implemented.")
+
     def init_mocks_state(self, state: Mapping):
         """
         Initializes the state of mocks.
@@ -72,6 +91,17 @@ class BaseRunner(BaseModel):
             state (Mapping): The new state of mocks.
         """
         raise NotImplementedError("set_mocks_state not implemented.")
+
+    def deploy_strategy(self, *args):
+        """
+        Deploys the backtester strategy contract.
+        """
+        if self._backtester is not None:
+            raise Exception("backtester strategy already deployed.")
+
+        self._backtester = getattr(project, self._backtester_name).deploy(
+            *args, sender=self.acc
+        )
 
     def init_strategy(self, number: int):
         """
@@ -183,7 +213,7 @@ class BaseRunner(BaseModel):
             self.update_strategy()
 
             # record value function on backtester and any additional state
-            value = self._backtester.value()
+            value = self.backtester.value()
             click.echo(f"Backtester value at block {number}: {value}")
             self.record(path, number, refs_state, value)
 
@@ -252,7 +282,7 @@ class BaseRunner(BaseModel):
             self.submit_txs(txs)
 
             # record value function on backtester
-            value = self._backtester.value()
+            value = self.backtester.value()
             click.echo(f"Backtester value at block {number}: {value}")
             self.record(path, number, refs_state, value)
 

@@ -43,18 +43,24 @@ class BaseCurveV2Runner(BaseRunner):
 
         Deploys mock ERC20 tokens needed for pool and mock Curve V2 pool.
         """
-        acc = get_test_account()
-        self._acc = acc
+        self._acc = get_test_account()
 
+        # deploy the mocks
+        self.deploy_mocks()
+
+    def deploy_mocks(self):
+        """
+        Deploys the mock contracts.
+        """
         # deploy the mock erc20s
         click.echo("Deploying mock ERC20 tokens ...")
         mock_coins = [
-            deploy_mock_erc20(f"Mock Coin{i}", coin.symbol(), coin.decimals(), acc)
+            deploy_mock_erc20(f"Mock Coin{i}", coin.symbol(), coin.decimals(), self.acc)
             for i, coin in enumerate(self._refs["coins"])
         ]
 
         # deploy the mock lp token and mint existing liquidity tokens
-        mock_lp = deploy_mock_lp("Mock Curve V2 LP", "crv3m", acc)
+        mock_lp = deploy_mock_lp("Mock Curve V2 LP", "crv3m", self.acc)
 
         # deploy the mock curve v2 pool
         A = 1000000  # 10**6
@@ -80,7 +86,7 @@ class BaseCurveV2Runner(BaseRunner):
             admin_fee,
             ma_half_time,
             [price, price],
-            acc,
+            self.acc,
         )
 
         self._mocks = {

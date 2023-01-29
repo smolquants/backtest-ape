@@ -35,13 +35,21 @@ class BaseUniswapV3Runner(BaseRunner):
         and mock Uniswap V3 position manager. Deploys the mock pool
         through the factory.
         """
-        acc = get_test_account()
-        self._acc = acc
+        self._acc = get_test_account()
 
+        # deploy the mocks
+        self.deploy_mocks()
+
+    def deploy_mocks(self):
+        """
+        Deploys the mock contracts.
+        """
         # deploy the mock erc20s
         click.echo("Deploying mock ERC20 tokens ...")
         mock_tokens = [
-            deploy_mock_erc20(f"Mock Token{i}", token.symbol(), token.decimals(), acc)
+            deploy_mock_erc20(
+                f"Mock Token{i}", token.symbol(), token.decimals(), self.acc
+            )
             for i, token in enumerate(self._refs["tokens"])
         ]
 
@@ -50,16 +58,16 @@ class BaseUniswapV3Runner(BaseRunner):
             mock_tokens[0] if mock_tokens[0].symbol() == "WETH" else mock_tokens[1]
         )
         if mock_weth.symbol() != "WETH":
-            mock_weth = deploy_mock_erc20("Mock WETH9", "WETH", 18, acc)
+            mock_weth = deploy_mock_erc20("Mock WETH9", "WETH", 18, self.acc)
 
         # deploy the mock univ3 factory
         click.echo("Deploying mock Uniswap V3 factory ...")
-        mock_factory = deploy_mock_univ3_factory(acc)
+        mock_factory = deploy_mock_univ3_factory(self.acc)
 
         # deploy the mock NFT position manager
         # NOTE: uses zero address for descriptor so tokenURI will fail
         click.echo("Deploying the mock position manager ...")
-        mock_manager = deploy_mock_position_manager(mock_factory, mock_weth, acc)
+        mock_manager = deploy_mock_position_manager(mock_factory, mock_weth, self.acc)
 
         # create the pool through the mock univ3 factory
         fee = 3000  # default fee of 0.3%
@@ -69,7 +77,7 @@ class BaseUniswapV3Runner(BaseRunner):
             mock_tokens,
             fee,
             price,
-            acc,
+            self.acc,
         )
 
         self._mocks = {

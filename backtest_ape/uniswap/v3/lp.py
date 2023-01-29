@@ -2,7 +2,7 @@ import os
 from typing import Mapping
 
 import pandas as pd
-from ape import chain, project
+from ape import chain
 from hexbytes import HexBytes
 
 from backtest_ape.uniswap.v3.base import BaseUniswapV3Runner
@@ -13,6 +13,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
     tick_upper: int
     amount_weth: int
     amount_token: int
+    _backtester_name = "UniswapV3LPBacktest"
 
     def setup(self):
         """
@@ -27,10 +28,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         super().setup()
 
         # deploy the backtester
-        manager = self._mocks["manager"]
-        self._backtester = project.UniswapV3LPBacktest.deploy(
-            manager.address, sender=self._acc
-        )
+        self.deploy_strategy(*[self._mocks["manager"].address])
         self._initialized = True
 
     def get_refs_state(self, number: int) -> Mapping:
@@ -77,7 +75,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         ecosystem = chain.provider.network.ecosystem
 
         # set the tick first for position manager add liquidity to work properly
-        mock_pool.setTick(state["slot0"].tick, sender=self._acc)
+        mock_pool.setTick(state["slot0"].tick, sender=self.acc)
 
         # mint both tokens to backtester, approve manager to transfer,
         targets = [
@@ -90,13 +88,13 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
             ecosystem.encode_transaction(
                 mock_weth.address,
                 mock_weth.mint.abis[0],
-                self._backtester.address,
+                self.backtester.address,
                 self.amount_weth,
             ).data,
             ecosystem.encode_transaction(
                 mock_token.address,
                 mock_token.mint.abis[0],
-                self._backtester.address,
+                self.backtester.address,
                 self.amount_token,
             ).data,
             ecosystem.encode_transaction(
@@ -113,7 +111,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
             ).data,
         ]
         values = [0, 0, 0, 0]
-        self._backtester.multicall(targets, datas, values, sender=self._acc)
+        self.backtester.multicall(targets, datas, values, sender=self.acc)
 
         # then mint the LP position
         mint_params = (
@@ -126,16 +124,16 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
             self.amount_token,
             0,
             0,
-            self._backtester.address,
+            self.backtester.address,
             chain.blocks.head.timestamp + 86400,
         )
-        receipt = self._backtester.execute(
+        receipt = self.backtester.execute(
             mock_manager.address,
             ecosystem.encode_transaction(
                 mock_manager.address, mock_manager.mint.abis[0], mint_params
             ).data,
             0,
-            sender=self._acc,
+            sender=self.acc,
         )  # TODO: fix
         result = receipt.return_value
         if result == HexBytes("0x"):
@@ -143,7 +141,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         token_id = int(bytes(result))  # TODO: check
 
         # store token id in backtester
-        self._backtester.push(token_id, sender=self._acc)
+        self.backtester.push(token_id, sender=self.acc)
 
         # set the mock state
         self.set_mocks_state(state)
