@@ -48,8 +48,13 @@ def main():
     runner = runner_cls(**kwargs)
     runner.setup()
 
+    # prompt user for choice of method: backtest, replay, or forwardtest
+    method_name = click.prompt(
+        "Method",
+        type=click.Choice(["backtest", "replay", "forwardtest"], case_sensitive=False),
+    )
+
     # run backtest
-    # TODO: choice for back or forward testing
     start = click.prompt("Start block number", type=int)
     stop = click.prompt("Stop block number", type=int, default=-1)
     step = click.prompt("Step size", type=int, default=1)
@@ -57,4 +62,8 @@ def main():
     if stop < 0:
         stop = None
 
-    runner.backtest(path, start, stop, step)
+    args = [path, start, stop]
+    if method_name != "replay":
+        args.append(step)
+
+    getattr(runner, method_name)(*args)

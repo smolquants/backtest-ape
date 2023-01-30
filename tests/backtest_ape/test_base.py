@@ -45,15 +45,16 @@ def test_validator_when_not_has_keys():
         Runner(ref_addrs={})
 
 
-def test_load_ref_txs(number, transactions, runner):
-    runner.load_ref_txs(number)
-    assert runner._ref_txs[number] == transactions
-
-
 def test_get_ref_txs(number, transactions, runner):
-    runner.load_ref_txs(number)
+    head_number = chain.blocks.head.number
+    chain.provider.reset_fork(number - 1)
+
     ref_txs = runner.get_ref_txs(number)
     assert ref_txs == transactions
+
+    # NOTE: avoids BlockNotFound exceptions with isolation fixture
+    # TODO: fix isolation fixture for this
+    chain.provider.reset_fork(head_number)
 
 
 def test_submit_tx(number, transactions, runner, WETH9):

@@ -2,7 +2,7 @@ from typing import Any, ClassVar, List, Mapping, Optional
 
 import click
 import pandas as pd
-from ape import Contract, chain, project
+from ape import Contract, chain, networks, project
 from ape.api.accounts import AccountAPI
 from ape.api.transactions import TransactionAPI
 from ape.contracts import ContractInstance
@@ -144,27 +144,23 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("record not implemented.")
 
-    def load_ref_txs(self, number: Optional[int] = None):
-        """
-        Loads the reference transactions from the given block.
-
-        Args:
-            number (int): The block number. If None, then last block
-                from current provider chain.
-        """
-        block_identifier = get_block_identifier(number)
-        self._ref_txs[block_identifier] = chain.blocks[block_identifier].transactions
-
     def get_ref_txs(self, number: Optional[int] = None) -> List[TransactionAPI]:
         """
-        Get the cached reference transactions for the given block.
+        Get reference transactions for the given block.
 
         Args:
-            number (Optional[int]): The block number.  If None, then last block
-                from current provider chain.
+            number (Optional[int]): The block number. If None, then last block
+                from upstream provider chain.
         """
         block_identifier = get_block_identifier(number)
-        return self._ref_txs[block_identifier]
+        ecosystem_name = chain.provider.network.ecosystem.name
+        upstream_name = chain.provider.config.fork[ecosystem_name][
+            "mainnet"
+        ].upstream_provider
+        with networks.parse_network_choice(
+            f"{ecosystem_name}:mainnet:{upstream_name}"
+        ) as provider:
+            return provider.get_block(block_id=block_identifier).transactions
 
     def submit_tx(self, tx: TransactionAPI):
         """
@@ -268,13 +264,6 @@ class BaseRunner(BaseModel):
 
         if start > stop:
             raise ValueError("start block after stop block.")
-
-        click.echo(
-            f"Loading historical txs from {start+1} to {stop} with step size 1 ..."
-        )
-        for number in range(start + 1, stop, 1):
-            click.echo(f"Loading from block {number} ...")
-            self.load_ref_txs(number)
 
         click.echo(f"Resetting fork to block number {start} ...")
         chain.provider.reset_fork(start)
