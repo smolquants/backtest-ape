@@ -105,13 +105,10 @@ class BaseRunner(BaseModel):
             *args, sender=self.acc
         )
 
-    def init_strategy(self, number: int):
+    def init_strategy(self):
         """
         Initializes the strategy being backtested through backtester contract
         at the given block.
-
-        Args:
-            number (int): The block number.
         """
         raise NotImplementedError("init_strategy not implemented.")
 
@@ -120,15 +117,6 @@ class BaseRunner(BaseModel):
         Updates the strategy being backtested through backtester contract.
         """
         raise NotImplementedError("update_strategy not implemented.")
-
-    def get_update_txs(self) -> List:
-        """
-        Gets the update transactions used to update strategy.
-
-        Returns:
-            List: The transactions.
-        """
-        raise NotImplementedError("get_update_txs not implemented.")
 
     def record(self, path: str, number: int, state: Mapping, value: int):
         """
@@ -200,6 +188,9 @@ class BaseRunner(BaseModel):
         if not self._initialized:
             raise Exception("runner not setup.")
 
+        if chain.provider.network.name != "mainnet-fork":
+            raise Exception("network not mainnet-fork.")
+
         if stop is None:
             stop = chain.blocks.head.number
 
@@ -222,13 +213,14 @@ class BaseRunner(BaseModel):
             # set the state of mocks to refs state for vars
             self.set_mocks_state(refs_state)
 
-            # update backtested strategy based off new mock state, if needed
-            self.update_strategy()
-
             # record value function on backtester and any additional state
             value = self.backtester.value()
             click.echo(f"Backtester value at block {number}: {value}")
             self.record(path, number, refs_state, value)
+
+            # update backtested strategy based off new mock state, if needed
+            click.echo(f"Updating strategy at block {number} ...")
+            self.update_strategy()
 
     def replay(
         self,
@@ -255,6 +247,9 @@ class BaseRunner(BaseModel):
         if not self._initialized:
             raise Exception("runner not setup.")
 
+        if chain.provider.network.name != "mainnet-fork":
+            raise Exception("network not mainnet-fork.")
+
         if stop is None:
             stop = chain.blocks.head.number
 
@@ -265,7 +260,7 @@ class BaseRunner(BaseModel):
         chain.provider.reset_fork(start)
 
         click.echo(f"Initializing state of strategy at block number {start} ...")
-        self.init_strategy(start)
+        self.init_strategy()
 
         click.echo(
             f"Iterating from block number {start+1} to {stop} with step size 1 ..."
@@ -277,23 +272,19 @@ class BaseRunner(BaseModel):
             refs_state = self.get_refs_state()
             click.echo(f"State of refs at block {number}: {refs_state}")
 
-            # get the ref network txs at historical block.number
+            # get the ref network txs at historical block.number and submit to chain
             ref_txs = self.get_ref_txs(number)
             click.echo(f"Number of ref txs at block {number}: {len(ref_txs)}")
-
-            # update backtested strategy based off current chain state
-            # and ref txs for current block
-            update_txs = self.get_update_txs()
-            click.echo(f"Number of update txs for block {number}: {len(update_txs)}")
-
-            # submit bundle of ref + update txs
-            txs = ref_txs + update_txs
-            self.submit_txs(txs)
+            self.submit_txs(ref_txs)
 
             # record value function on backtester
             value = self.backtester.value()
             click.echo(f"Backtester value at block {number}: {value}")
             self.record(path, number, refs_state, value)
+
+            # update backtested strategy based off current chain state, if needed
+            click.echo(f"Updating strategy at block {number} ...")
+            self.update_strategy()
 
     def forwardtest(self, data: pd.DataFrame) -> pd.DataFrame:
         """

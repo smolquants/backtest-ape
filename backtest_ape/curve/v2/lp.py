@@ -162,6 +162,44 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         else:
             mock_lp.burnFrom(self.acc.address, abs(d_supply), sender=self.acc)
 
+    def init_strategy(self):
+        """
+        Initializes the strategy being backtested through backtester contract
+        at the given block.
+        """
+        pool = self._refs["pool"]
+        coins = self._refs["coins"]
+        ecosystem = chain.provider.network.ecosystem
+
+        # TODO: figure out how to fund self.acc with specified token amounts
+        # approve pool to spend each coin
+        targets = [coin.address for coin in coins]
+        datas = [
+            ecosystem.encode_transaction(
+                coin.address,
+                coin.approve.abis[0],
+                pool.address,
+                2**256 - 1,
+            ).data
+            for i, coin in enumerate(coins)
+        ]
+        values = [0 for _ in range(self.num_coins)]
+
+        # deposit coins to pool as lp
+        targets += [pool.address]
+        datas += [
+            ecosystem.encode_transaction(
+                pool.address,
+                pool.add_liquidity.abis[0],
+                self.amounts,
+                0,
+            ).data,
+        ]
+        values += [0]
+
+        # execute through backtester
+        self.backtester.multicall(targets, datas, values, sender=self.acc)
+
     def update_strategy(self):
         """
         Updates the strategy being backtested through backtester contract.
