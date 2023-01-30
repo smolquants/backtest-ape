@@ -9,8 +9,6 @@ from ape.contracts import ContractInstance
 from ape.exceptions import ContractLogicError
 from pydantic import BaseModel, validator
 
-from backtest_ape.utils import get_block_identifier
-
 
 class BaseRunner(BaseModel):
     ref_addrs: Mapping[str, str]
@@ -144,15 +142,13 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("record not implemented.")
 
-    def get_ref_txs(self, number: Optional[int] = None) -> List[TransactionAPI]:
+    def get_ref_txs(self, number: int) -> List[TransactionAPI]:
         """
         Get reference transactions for the given block.
 
         Args:
-            number (Optional[int]): The block number. If None, then last block
-                from upstream provider chain.
+            number (Optional[int]): The block number.
         """
-        block_identifier = get_block_identifier(number)
         ecosystem_name = chain.provider.network.ecosystem.name
         upstream_name = chain.provider.config.fork[ecosystem_name][
             "mainnet"
@@ -160,7 +156,7 @@ class BaseRunner(BaseModel):
         with networks.parse_network_choice(
             f"{ecosystem_name}:mainnet:{upstream_name}"
         ) as provider:
-            return provider.get_block(block_id=block_identifier).transactions
+            return provider.get_block(block_id=number).transactions
 
     def submit_tx(self, tx: TransactionAPI):
         """
