@@ -11,9 +11,8 @@ def runner():
     )
 
 
-def test_setup(runner, acc):
+def test_setup(runner):
     runner.setup()
-    assert runner._acc == acc
 
     mocks = runner._mocks
     assert set(mocks.keys()) == set(

@@ -9,9 +9,12 @@ from ape.contracts import ContractInstance
 from ape.exceptions import ContractLogicError
 from pydantic import BaseModel, validator
 
+from backtest_ape.utils import get_impersonated_account, get_test_account
+
 
 class BaseRunner(BaseModel):
     ref_addrs: Mapping[str, str]
+    acc_addr: str = None
 
     _ref_keys: ClassVar[List[str]] = []
     _refs: Mapping[str, ContractInstance]
@@ -35,6 +38,11 @@ class BaseRunner(BaseModel):
         """
         super().__init__(**data)
         self._refs = {k: Contract(ref_addr) for k, ref_addr in self.ref_addrs.items()}
+        self._acc = (
+            get_impersonated_account(self.acc_addr)
+            if self.acc_addr is not None
+            else get_test_account()
+        )
 
     class Config:
         underscore_attrs_are_private = True

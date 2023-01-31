@@ -28,12 +28,19 @@ def runner(ref_addrs):
     return Runner(ref_addrs=ref_addrs)
 
 
-def test_init():
+def test_init(acc):
     ref_addrs = {"pool": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8"}
     runner = BaseRunner(ref_addrs=ref_addrs)
     assert runner._refs == {
         "pool": Contract("0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8")
     }
+    assert runner._acc == acc
+
+
+def test_init_when_acc_not_none(alice):
+    ref_addrs = {"pool": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8"}
+    runner = BaseRunner(ref_addrs=ref_addrs, acc_addr=alice.address)
+    assert runner._acc == alice
 
 
 def test_validator_when_has_keys():

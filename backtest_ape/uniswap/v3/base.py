@@ -10,7 +10,6 @@ from backtest_ape.uniswap.v3.setup import (
     deploy_mock_position_manager,
     deploy_mock_univ3_factory,
 )
-from backtest_ape.utils import get_test_account
 
 
 class BaseUniswapV3Runner(BaseRunner):
@@ -35,9 +34,6 @@ class BaseUniswapV3Runner(BaseRunner):
         and mock Uniswap V3 position manager. Deploys the mock pool
         through the factory.
         """
-        self._acc = get_test_account()
-
-        # deploy the mocks
         self.deploy_mocks()
 
     def deploy_mocks(self):
