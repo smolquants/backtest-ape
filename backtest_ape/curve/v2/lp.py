@@ -171,7 +171,6 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         coins = self._refs["coins"]
         ecosystem = chain.provider.network.ecosystem
 
-        # TODO: figure out how to fund self.acc with specified token amounts
         # approve pool to spend each coin
         targets = [coin.address for coin in coins]
         datas = [
