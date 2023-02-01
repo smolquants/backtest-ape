@@ -6,7 +6,10 @@ from backtest_ape.uniswap.v3.base import BaseUniswapV3Runner
 @pytest.fixture
 def runner():
     return BaseUniswapV3Runner(
-        ref_addrs={"pool": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8"}
+        ref_addrs={
+            "pool": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8",
+            "manager": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
+        }
     )
 
 

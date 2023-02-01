@@ -10,6 +10,7 @@ from backtest_ape.uniswap.v3.setup import (
     deploy_mock_position_manager,
     deploy_mock_univ3_factory,
 )
+from backtest_ape.utils import get_test_account, fund_account_from
 
 
 class BaseUniswapV3Runner(BaseRunner):
@@ -37,6 +38,10 @@ class BaseUniswapV3Runner(BaseRunner):
         """
         if mocking:
             self.deploy_mocks()
+
+        test_acc = get_test_account()
+        if self.acc != test_acc:
+            fund_account_from(self.acc, test_acc)
 
     def deploy_mocks(self):
         """

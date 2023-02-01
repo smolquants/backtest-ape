@@ -59,13 +59,9 @@ def test_init(acc):
 
 
 def test_init_when_acc_not_none(bridge, acc):
-    assert bridge.balance == 0
-    bal_acc = acc.balance
-
     ref_addrs = {"pool": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8"}
     runner = BaseRunner(ref_addrs=ref_addrs, acc_addr=bridge.address)
     assert runner._acc == bridge
-    assert bridge.balance == pytest.approx(bal_acc)
 
 
 def test_validator_when_has_keys():
