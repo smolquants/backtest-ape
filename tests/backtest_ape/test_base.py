@@ -1,7 +1,33 @@
 import pytest
-from ape import Contract, chain
+from ape import Contract, chain, networks
+from contextlib import contextmanager
 
 from backtest_ape.base import BaseRunner
+
+
+# SEE: https://github.com/ApeWorX/ape-foundry/blob/main/tests/conftest.py#L52
+@contextmanager
+def _isolate():
+    if networks.active_provider is None:
+        raise AssertionError("Isolation should only be used with a connected provider.")
+
+    init_network_name = chain.provider.network.name
+    if init_network_name != "mainnet-fork":
+        raise AssertionError(
+            "Isolation should only be used with network `mainnet-fork`."
+        )
+
+    init_number = chain.blocks.head.number
+
+    yield
+
+    chain.provider.reset_fork(init_number)
+
+
+@pytest.fixture(autouse=True)
+def reset_fork_isolation():
+    with _isolate():
+        yield
 
 
 class Runner(BaseRunner):
@@ -11,11 +37,6 @@ class Runner(BaseRunner):
 @pytest.fixture
 def number():
     return 16513664
-
-
-@pytest.fixture
-def transactions(number):
-    yield chain.blocks[number].transactions
 
 
 @pytest.fixture
@@ -37,10 +58,14 @@ def test_init(acc):
     assert runner._acc == acc
 
 
-def test_init_when_acc_not_none(alice):
+def test_init_when_acc_not_none(bridge, acc):
+    assert bridge.balance == 0
+    bal_acc = acc.balance
+
     ref_addrs = {"pool": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8"}
-    runner = BaseRunner(ref_addrs=ref_addrs, acc_addr=alice.address)
-    assert runner._acc == alice
+    runner = BaseRunner(ref_addrs=ref_addrs, acc_addr=bridge.address)
+    assert runner._acc == bridge
+    assert bridge.balance == pytest.approx(bal_acc)
 
 
 def test_validator_when_has_keys():
@@ -52,20 +77,16 @@ def test_validator_when_not_has_keys():
         Runner(ref_addrs={})
 
 
-def test_get_ref_txs(number, transactions, runner):
-    head_number = chain.blocks.head.number
+def test_get_ref_txs(number, runner):
+    transactions = chain.blocks[number].transactions
     chain.provider.reset_fork(number - 1)
 
     ref_txs = runner.get_ref_txs(number)
     assert ref_txs == transactions
 
-    # NOTE: avoids BlockNotFound exceptions with isolation fixture
-    # TODO: fix isolation fixture for this
-    chain.provider.reset_fork(head_number)
 
-
-def test_submit_tx(number, transactions, runner, WETH9):
-    head_number = chain.blocks.head.number
+def test_submit_tx(number, runner, WETH9):
+    transactions = chain.blocks[number].transactions
     chain.provider.reset_fork(number - 1)
 
     # cache WETH9 balance of pool swap thru in tx
@@ -83,13 +104,9 @@ def test_submit_tx(number, transactions, runner, WETH9):
     expect_delta_bal = 85681526175119496
     assert actual_delta_bal == expect_delta_bal
 
-    # NOTE: avoids BlockNotFound exceptions with isolation fixture
-    # TODO: fix isolation fixture for this
-    chain.provider.reset_fork(head_number)
 
-
-def test_submit_txs(number, transactions, runner):
-    head_number = chain.blocks.head.number
+def test_submit_txs(number, runner):
+    transactions = chain.blocks[number].transactions
     chain.provider.reset_fork(number - 1)
 
     txs = transactions[1:10]  # know all of these do *not* revert
@@ -99,23 +116,15 @@ def test_submit_txs(number, transactions, runner):
     for i in range(len(txs)):
         assert chain.blocks[number + i].transactions == [txs[i]]
 
-    # NOTE: avoids BlockNotFound exceptions with isolation fixture
-    # TODO: fix isolation fixture for this
-    chain.provider.reset_fork(head_number)
 
-
-def test_submit_tx_when_reverts(number, transactions, runner):
-    head_number = chain.blocks.head.number
+def test_submit_tx_when_reverts(number, runner):
+    transactions = chain.blocks[number].transactions
     chain.provider.reset_fork(number - 1)
 
     # check reverted tx included in block (fails silently)
     tx = transactions[84]  # know this *does* revert
     runner.submit_tx(tx)
     assert chain.blocks[number].transactions == [tx]
-
-    # NOTE: avoids BlockNotFound exceptions with isolation fixture
-    # TODO: fix isolation fixture for this
-    chain.provider.reset_fork(head_number)
 
 
 # TODO: test_backtest, test_replay, test_forwardtest
