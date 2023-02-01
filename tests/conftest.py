@@ -24,4 +24,4 @@ def WETH9():
 
 @pytest.fixture(scope="session")
 def bridge():
-    yield accounts["0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf"]
+    yield accounts["0x99C9fc46f92E8a1c0deC1b1747d010903E884bE1"]

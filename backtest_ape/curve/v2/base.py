@@ -48,9 +48,8 @@ class BaseCurveV2Runner(BaseRunner):
         if mocking:
             self.deploy_mocks()
 
-        test_acc = get_test_account()
-        if self.acc != test_acc:
-            fund_account_from(self.acc, test_acc)
+        if self.acc.balance == 0:
+            fund_account_from(self.acc, get_test_account())
 
     def deploy_mocks(self):
         """

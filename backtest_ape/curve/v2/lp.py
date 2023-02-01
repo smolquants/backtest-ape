@@ -45,7 +45,9 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         super().setup(mocking=mocking)
 
         # deploy the backtester
-        pool_addr = self._mocks["pool"].address if mocking else self._refs["pool"]
+        pool_addr = (
+            self._mocks["pool"].address if mocking else self._refs["pool"].address
+        )
         self.deploy_strategy(*[pool_addr, self.num_coins])
         self._initialized = True
 
@@ -174,9 +176,22 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         coins = self._refs["coins"]
         ecosystem = chain.provider.network.ecosystem
 
-        # approve pool to spend each coin
+        # transfer tokens from acc to backtester
         targets = [coin.address for coin in coins]
         datas = [
+            ecosystem.encode_transaction(
+                coin.address,
+                coin.transfer.abis[0],
+                self.backtester.address,
+                self.amounts[i],
+            ).data
+            for i, coin in enumerate(coins)
+        ]
+        values = [0 for _ in range(self.num_coins)]
+
+        # approve pool to spend each coin
+        targets += [coin.address for coin in coins]
+        datas += [
             ecosystem.encode_transaction(
                 coin.address,
                 coin.approve.abis[0],
@@ -185,7 +200,7 @@ class CurveV2LPRunner(BaseCurveV2Runner):
             ).data
             for i, coin in enumerate(coins)
         ]
-        values = [0 for _ in range(self.num_coins)]
+        values += [0 for _ in range(self.num_coins)]
 
         # deposit coins to pool as lp
         targets += [pool.address]
