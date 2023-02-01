@@ -10,10 +10,10 @@ from backtest_ape.uniswap.v3.base import BaseUniswapV3Runner
 
 
 class UniswapV3LPRunner(BaseUniswapV3Runner):
-    tick_lower: int
-    tick_upper: int
-    amount_weth: int
-    amount_token: int
+    tick_lower: int = 0
+    tick_upper: int = 0
+    amount_weth: int = 0
+    amount_token: int = 0
     _backtester_name = "UniswapV3LPBacktest"
 
     def setup(self):

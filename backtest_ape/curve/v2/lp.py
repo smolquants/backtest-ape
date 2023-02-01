@@ -10,7 +10,7 @@ from backtest_ape.curve.v2.base import BaseCurveV2Runner
 
 
 class CurveV2LPRunner(BaseCurveV2Runner):
-    amounts: List[int]
+    amounts: List[int] = []
     _backtester_name = "CurveV2LPBacktest"
 
     @validator("amounts")

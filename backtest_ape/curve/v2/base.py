@@ -9,7 +9,7 @@ from backtest_ape.setup import deploy_mock_erc20
 
 
 class BaseCurveV2Runner(BaseRunner):
-    num_coins: int
+    num_coins: int = 0
     _ref_keys: ClassVar[List[str]] = ["pool"]
 
     def __init__(self, **data: Any):

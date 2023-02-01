@@ -34,6 +34,13 @@ def main():
         # default to str if not base type
         type_origin = get_origin(field.annotation)
         type_ = field.annotation if type_origin is None else str
+
+        # confirm prompt if Optional
+        if field.default is None:
+            if not click.confirm(f"Runner kwarg ({name}) defaults to None. Do you want to input a value?"):
+                kwargs[name] = field.default
+                continue
+
         value = click.prompt(
             f"Runner kwarg ({name})", default=field.default, type=type_
         )
@@ -58,7 +65,7 @@ def main():
     start = click.prompt("Start block number", type=int)
     stop = click.prompt("Stop block number", type=int, default=-1)
     step = click.prompt("Step size", type=int, default=1)
-    path = f"scripts/results/{runner_cls_name}_{start}_{stop}_{step}.csv"
+    path = f"scripts/results/{runner_cls_name}_{method_name}_{start}_{stop}_{step}.csv"
     if stop < 0:
         stop = None
 
