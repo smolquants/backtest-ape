@@ -16,17 +16,20 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
     amount_token: int = 0
     _backtester_name = "UniswapV3LPBacktest"
 
-    def setup(self):
+    def setup(self, mocking: bool = True):
         """
         Sets up Uniswap V3 LP runner for testing.
 
-        Deploys mock ERC20 tokens needed for pool, mock Uniswap V3 factory
+        If mocking, deploys mock ERC20 tokens needed for pool, mock Uniswap V3 factory
         and mock Uniswap V3 position manager. Deploys the mock pool
         through the factory.
 
         Then deploys the Uniswap V3 LP backtester.
+
+        Args:
+            mocking (bool): Whether to deploy mocks.
         """
-        super().setup()
+        super().setup(mocking=mocking)
 
         # deploy the backtester
         self.deploy_strategy(*[self._mocks["manager"].address])

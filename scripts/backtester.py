@@ -55,7 +55,6 @@ def main():
 
     # setup runner
     runner = runner_cls(**kwargs)
-    runner.setup()
 
     # prompt user for choice of method: backtest, replay, or forwardtest
     method_name = click.prompt(

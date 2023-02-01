@@ -26,15 +26,17 @@ class BaseUniswapV3Runner(BaseRunner):
         pool = self._refs["pool"]
         self._refs["tokens"] = [Contract(pool.token0()), Contract(pool.token1())]
 
-    def setup(self):
+    def setup(self, mocking: bool = True):
         """
-        Sets up Uniswap V3 runner for testing.
+        Sets up Uniswap V3 runner for testing. If mocking, deploys mock ERC20
+        tokens needed for pool, mock Uniswap V3 factory and mock Uniswap V3 position
+        manager. Deploys the mock pool through the factory.
 
-        Deploys mock ERC20 tokens needed for pool, mock Uniswap V3 factory
-        and mock Uniswap V3 position manager. Deploys the mock pool
-        through the factory.
+        Args:
+            mocking (bool): Whether to deploy mocks.
         """
-        self.deploy_mocks()
+        if mocking:
+            self.deploy_mocks()
 
     def deploy_mocks(self):
         """

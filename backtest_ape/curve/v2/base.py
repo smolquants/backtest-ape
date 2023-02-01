@@ -36,13 +36,16 @@ class BaseCurveV2Runner(BaseRunner):
         # store pool lp token in _refs
         self._refs["lp"] = Contract(pool.token())
 
-    def setup(self):
+    def setup(self, mocking: bool = True):
         """
-        Sets up Curve V2 runner for testing.
+        Sets up Curve V2 runner for testing. Deploys mock ERC20 tokens needed
+        for pool and mock Curve V2 pool, if mocking.
 
-        Deploys mock ERC20 tokens needed for pool and mock Curve V2 pool.
+        Args:
+            mocking (bool): Whether to deploy mocks.
         """
-        self.deploy_mocks()
+        if mocking:
+            self.deploy_mocks()
 
     def deploy_mocks(self):
         """

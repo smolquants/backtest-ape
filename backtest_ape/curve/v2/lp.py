@@ -33,14 +33,16 @@ class CurveV2LPRunner(BaseCurveV2Runner):
             if balance < self.amounts[i]:
                 raise ValueError("amounts not less than balances")
 
-    def setup(self):
+    def setup(self, mocking: bool = True):
         """
-        Sets up Curve V2 LP runner for testing.
+        Sets up Curve V2 LP runner for testing. Deploys mock ERC20 tokens needed
+        for pool and mock Curve V2 pool, if mocking. Then deploys the Curve V2
+        LP backtester.
 
-        Deploys mock ERC20 tokens needed for pool and mock Curve V2 pool. Then
-        deploys the Curve V2 LP backtester.
+        Args:
+            mocking (bool): Whether to deploy mocks.
         """
-        super().setup()
+        super().setup(mocking=mocking)
 
         # deploy the backtester
         self.deploy_strategy(*[self._mocks["pool"].address, self.num_coins])

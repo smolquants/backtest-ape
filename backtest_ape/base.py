@@ -65,9 +65,12 @@ class BaseRunner(BaseModel):
             raise Exception("backtester strategy not deployed.")
         return self._backtester
 
-    def setup(self):
+    def setup(self, mocking: bool = True):
         """
         Sets up the runner for testing.
+
+        Args:
+            mocking (bool): Whether to deploy mocks.
         """
         raise NotImplementedError("setup not implemented.")
 
@@ -199,9 +202,6 @@ class BaseRunner(BaseModel):
             stop (Optional[int]): The stop block number.
             step (Optional[int]): The step interval size.
         """
-        if not self._initialized:
-            raise Exception("runner not setup.")
-
         if chain.provider.network.name != "mainnet-fork":
             raise Exception("network not mainnet-fork.")
 
@@ -210,6 +210,12 @@ class BaseRunner(BaseModel):
 
         if start > stop:
             raise ValueError("start block after stop block.")
+
+        click.echo("Setting up runner ...")
+        self.setup(mocking=True)
+
+        if not self._initialized:
+            raise Exception("runner not initialized.")
 
         click.echo(f"Initializing state of mocks from block number {start} ...")
         self.init_mocks_state(self.get_refs_state(start))
@@ -258,9 +264,6 @@ class BaseRunner(BaseModel):
             start (int): The start block number.
             stop (Optional[int]): The stop block number.
         """
-        if not self._initialized:
-            raise Exception("runner not setup.")
-
         if chain.provider.network.name != "mainnet-fork":
             raise Exception("network not mainnet-fork.")
 
@@ -272,6 +275,12 @@ class BaseRunner(BaseModel):
 
         click.echo(f"Resetting fork to block number {start} ...")
         chain.provider.reset_fork(start)
+
+        click.echo("Setting up runner ...")
+        self.setup(mocking=False)
+
+        if not self._initialized:
+            raise Exception("runner not initialized.")
 
         click.echo(f"Initializing state of strategy at block number {start} ...")
         self.init_strategy()
