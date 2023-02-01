@@ -25,7 +25,7 @@ class BaseRunner(BaseModel):
     _ref_txs: Mapping[int, List[TransactionAPI]] = {}
     _mocks: Mapping[str, ContractInstance] = {}
     _acc: Optional[AccountAPI] = None
-    _backtester_name: ClassVar[str] = ''
+    _backtester_name: ClassVar[str] = ""
     _backtester: Optional[ContractInstance] = None
     _initialized: bool = False
 
