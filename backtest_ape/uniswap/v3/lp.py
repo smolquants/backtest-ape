@@ -32,7 +32,10 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         super().setup(mocking=mocking)
 
         # deploy the backtester
-        self.deploy_strategy(*[self._mocks["manager"].address])
+        manager_addr = (
+            self._mocks["manager"].address if mocking else self._refs["manager"].address
+        )
+        self.deploy_strategy(*[manager_addr])
         self._initialized = True
 
     def get_refs_state(self, number: Optional[int] = None) -> Mapping:

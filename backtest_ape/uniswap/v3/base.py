@@ -13,7 +13,7 @@ from backtest_ape.uniswap.v3.setup import (
 
 
 class BaseUniswapV3Runner(BaseRunner):
-    _ref_keys: ClassVar[List[str]] = ["pool"]
+    _ref_keys: ClassVar[List[str]] = ["pool", "manager"]
 
     def __init__(self, **data: Any):
         """

@@ -45,7 +45,8 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         super().setup(mocking=mocking)
 
         # deploy the backtester
-        self.deploy_strategy(*[self._mocks["pool"].address, self.num_coins])
+        pool_addr = self._mocks["pool"].address if mocking else self._refs["pool"]
+        self.deploy_strategy(*[pool_addr, self.num_coins])
         self._initialized = True
 
     def get_refs_state(self, number: Optional[int] = None) -> Mapping:
