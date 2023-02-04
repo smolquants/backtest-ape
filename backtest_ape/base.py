@@ -200,9 +200,11 @@ class BaseRunner(BaseModel):
             tx (TransactionAPI): The transaction.
         """
         try:
+            tx.required_confirmations = None
             _ = chain.provider.send_transaction(tx)
         except ContractLogicError:
             # let txs that revert fail silently
+            # TODO: fix for script run, since errors and stops
             pass
 
     def submit_txs(self, txs: List[TransactionAPI]):
@@ -212,6 +214,7 @@ class BaseRunner(BaseModel):
         Args:
             txs (List): The transactions.
         """
+        # TODO: possible to bundle txs into single fork block?
         for tx in txs:
             self.submit_tx(tx)
 
@@ -326,7 +329,7 @@ class BaseRunner(BaseModel):
 
             # get the ref network txs at historical block.number and submit to chain
             ref_txs = self.get_ref_txs(number)
-            click.echo(f"Number of ref txs at block {number}: {len(ref_txs)}")
+            click.echo(f"Submitting {len(ref_txs)} ref txs from block {number} ...")
             self.submit_txs(ref_txs)
 
             # record value function on backtester
