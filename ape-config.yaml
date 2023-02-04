@@ -21,7 +21,6 @@ default_ecosystem: ethereum
 ethereum:
   default_network: mainnet-fork
   mainnet_fork:
-    gas_limit: max
     default_provider: foundry
 
 foundry:

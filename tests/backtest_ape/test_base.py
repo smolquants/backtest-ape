@@ -78,6 +78,7 @@ def test_reset_fork(number, runner):
     base_fee = chain.blocks[number].base_fee
     runner.reset_fork(number)
     assert chain.blocks.head.number == number
+    chain.mine()
     assert chain.blocks.head.base_fee == base_fee
 
 
