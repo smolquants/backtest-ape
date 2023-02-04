@@ -6,7 +6,6 @@ from ape import Contract
 from backtest_ape.base import BaseRunner
 from backtest_ape.curve.v2.setup import deploy_mock_lp, deploy_mock_pool
 from backtest_ape.setup import deploy_mock_erc20
-from backtest_ape.utils import get_test_account, fund_account_from
 
 
 class BaseCurveV2Runner(BaseRunner):
@@ -47,9 +46,6 @@ class BaseCurveV2Runner(BaseRunner):
         """
         if mocking:
             self.deploy_mocks()
-
-        if self.acc.balance == 0:
-            fund_account_from(self.acc, get_test_account())
 
     def deploy_mocks(self):
         """

@@ -12,6 +12,7 @@ from pydantic import BaseModel, validator
 from backtest_ape.utils import (
     get_impersonated_account,
     get_test_account,
+    fund_account,
 )
 
 
@@ -41,11 +42,18 @@ class BaseRunner(BaseModel):
         """
         super().__init__(**data)
         self._refs = {k: Contract(ref_addr) for k, ref_addr in self.ref_addrs.items()}
+
+        # set either as impersonated account or test account
+        test_acc = get_test_account()
         self._acc = (
             get_impersonated_account(self.acc_addr)
             if self.acc_addr is not None
-            else get_test_account()
+            else test_acc
         )
+
+        # fund the account if needed
+        if self._acc.balance < test_acc.balance:
+            fund_account(self._acc.address, test_acc.balance)
 
     class Config:
         underscore_attrs_are_private = True
@@ -115,6 +123,9 @@ class BaseRunner(BaseModel):
         if self._backtester is not None:
             raise Exception("backtester strategy already deployed.")
 
+        # TODO: fix this call as its returning this error post reset fork ...
+        # TODO: ERROR: (VirtualMachineError) max fee per gas less than block base fee
+        click.echo(f"Deploying backtester strategy {self._backtester_name} ...")
         self._backtester = getattr(project, self._backtester_name).deploy(
             *args, sender=self.acc
         )

@@ -20,15 +20,15 @@ def get_impersonated_account(address: str) -> AccountAPI:
     return accounts[address]
 
 
-def fund_account_from(recipient: AccountAPI, sender: AccountAPI):
+def fund_account(address: str, amount: int):
     """
     Funds an account from the entire balance of another account.
 
     Args:
-        recipient (AccountAPI): The recipient of funds.
-        sender (AccountAPI): The sender of funds.
+        address (str): The recipient of funds.
+        amount (int): The funding amount.
     """
-    sender.transfer(recipient, send_everything=True)
+    chain.set_balance(address, amount)
 
 
 def get_block_identifier(number: Optional[int] = None) -> int:
