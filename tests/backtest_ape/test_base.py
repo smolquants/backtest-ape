@@ -74,9 +74,16 @@ def test_validator_when_not_has_keys():
         Runner(ref_addrs={})
 
 
+def test_reset_fork(number, runner):
+    base_fee = chain.blocks[number].base_fee
+    runner.reset_fork(number)
+    assert chain.blocks.head.number == number
+    assert chain.blocks.head.base_fee == base_fee
+
+
 def test_get_ref_txs(number, runner):
     transactions = chain.blocks[number].transactions
-    chain.provider.reset_fork(number - 1)
+    runner.reset_fork(number - 1)
 
     ref_txs = runner.get_ref_txs(number)
     assert ref_txs == transactions
@@ -84,7 +91,7 @@ def test_get_ref_txs(number, runner):
 
 def test_submit_tx(number, runner, WETH9):
     transactions = chain.blocks[number].transactions
-    chain.provider.reset_fork(number - 1)
+    runner.reset_fork(number - 1)
 
     # cache WETH9 balance of pool swap thru in tx
     pool_addr = "0xC1409A2c5673299fB15Da5f03c27EB1aC88f7D8C"
@@ -104,7 +111,7 @@ def test_submit_tx(number, runner, WETH9):
 
 def test_submit_txs(number, runner):
     transactions = chain.blocks[number].transactions
-    chain.provider.reset_fork(number - 1)
+    runner.reset_fork(number - 1)
 
     txs = transactions[1:10]  # know all of these do *not* revert
     runner.submit_txs(txs)
@@ -116,7 +123,7 @@ def test_submit_txs(number, runner):
 
 def test_submit_tx_when_reverts(number, runner):
     transactions = chain.blocks[number].transactions
-    chain.provider.reset_fork(number - 1)
+    runner.reset_fork(number - 1)
 
     # check reverted tx included in block (fails silently)
     tx = transactions[84]  # know this *does* revert

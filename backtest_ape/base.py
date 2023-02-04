@@ -123,9 +123,6 @@ class BaseRunner(BaseModel):
         if self._backtester is not None:
             raise Exception("backtester strategy already deployed.")
 
-        # TODO: fix this call as its returning this error post reset fork ...
-        # TODO: ERROR: (VirtualMachineError) max fee per gas less than block base fee
-        click.echo(f"Deploying backtester strategy {self._backtester_name} ...")
         self._backtester = getattr(project, self._backtester_name).deploy(
             *args, sender=self.acc
         )
@@ -154,6 +151,30 @@ class BaseRunner(BaseModel):
             value (int): The value of the backtester for the state.
         """
         raise NotImplementedError("record not implemented.")
+
+    def reset_fork(self, number: int):
+        """
+        Resets the fork state to the given block.
+
+        WARNING: reset_fork with anvil, hardhat providers does *not* seem
+        to set the initial base fee to that of number automatically, so this
+        method manually sets via RPC call.
+
+        Args:
+            number (Optiona[int]): The block number.
+        """
+        endpoint = None
+        if chain.provider.name == "foundry":
+            endpoint = "anvil_setNextBlockBaseFeePerGas"
+        elif chain.provider.name == "hardhat":
+            endpoint = "hardhat_setNextBlockBaseFeePerGas"
+
+        if endpoint is None:
+            raise Exception("provider not foundry or hardhat.")
+
+        chain.provider.reset_fork(number)
+        base_fee = chain.blocks.head.base_fee
+        chain.provider._make_request(endpoint, [base_fee])
 
     def get_ref_txs(self, number: int) -> List[TransactionAPI]:
         """
@@ -282,7 +303,7 @@ class BaseRunner(BaseModel):
             raise ValueError("start block after stop block.")
 
         click.echo(f"Resetting fork to block number {start} ...")
-        chain.provider.reset_fork(start)
+        self.reset_fork(start)
 
         click.echo("Setting up runner ...")
         self.setup(mocking=False)
