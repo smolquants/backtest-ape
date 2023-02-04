@@ -2,12 +2,19 @@ name: backtest-ape
 
 plugins:
   - name: alchemy
+    version: 0.5.4
   - name: solidity
+    version: 0.5.4
   - name: foundry
+    version: 0.5.2
   - name: notebook
+    version: 0.5.0-alpha.2
   - name: etherscan
+    version: 0.5.5
   - name: risk
+    version: 0.1.0-alpha.2
   - name: vyper
+    version: 0.5.2
 
 default_ecosystem: ethereum
 
