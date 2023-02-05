@@ -25,6 +25,7 @@ class BaseRunner(BaseModel):
     _ref_txs: Mapping[int, List[TransactionAPI]] = {}
     _mocks: Mapping[str, ContractInstance] = {}
     _acc: Optional[AccountAPI] = None
+    _initial_acc_balance: int = 0
     _backtester_name: ClassVar[str] = ""
     _backtester: Optional[ContractInstance] = None
     _initialized: bool = False
@@ -45,15 +46,13 @@ class BaseRunner(BaseModel):
 
         # set either as impersonated account or test account
         test_acc = get_test_account()
+        self._initial_acc_balance = test_acc.balance
         self._acc = (
             get_impersonated_account(self.acc_addr)
             if self.acc_addr is not None
             else test_acc
         )
-
-        # fund the account if needed
-        if self._acc.balance < test_acc.balance:
-            fund_account(self._acc.address, test_acc.balance)
+        self.fund_account()
 
     class Config:
         underscore_attrs_are_private = True
@@ -69,6 +68,13 @@ class BaseRunner(BaseModel):
         if self._backtester is None:
             raise Exception("backtester strategy not deployed.")
         return self._backtester
+
+    def fund_account(self):
+        """
+        Funds runner account with initial account balance.
+        """
+        if self._acc.balance < self._initial_acc_balance:
+            fund_account(self._acc.address, self._initial_acc_balance)
 
     def setup(self, mocking: bool = True):
         """
@@ -204,7 +210,6 @@ class BaseRunner(BaseModel):
             _ = chain.provider.send_transaction(tx)
         except ContractLogicError:
             # let txs that revert fail silently
-            # TODO: fix for script run, since errors and stops
             pass
 
     def submit_txs(self, txs: List[TransactionAPI]):
@@ -274,6 +279,10 @@ class BaseRunner(BaseModel):
             click.echo(f"Updating strategy at block {number} ...")
             self.update_strategy()
 
+            # replenish funds for acc
+            click.echo("Replenishing funds in account ...")
+            self.fund_account()
+
     def replay(
         self,
         path: str,
@@ -340,6 +349,10 @@ class BaseRunner(BaseModel):
             # update backtested strategy based off current chain state, if needed
             click.echo(f"Updating strategy at block {number} ...")
             self.update_strategy()
+
+            # replenish funds for acc
+            click.echo("Replenishing funds in account ...")
+            self.fund_account()
 
     def forwardtest(self, data: pd.DataFrame) -> pd.DataFrame:
         """
