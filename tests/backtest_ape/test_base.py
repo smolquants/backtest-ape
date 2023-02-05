@@ -75,10 +75,12 @@ def test_validator_when_not_has_keys():
 
 
 def test_reset_fork(number, runner):
+    transactions = chain.blocks[number + 1].transactions
     base_fee = chain.blocks[number].base_fee
+
     runner.reset_fork(number)
     assert chain.blocks.head.number == number
-    chain.mine()
+    chain.provider.send_transaction(transactions[0])
     assert chain.blocks.head.base_fee == base_fee
 
 
