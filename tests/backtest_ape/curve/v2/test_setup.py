@@ -1,9 +1,7 @@
 from ape.contracts import ContractInstance
+
+from backtest_ape.curve.v2.setup import deploy_mock_lp, deploy_mock_pool
 from backtest_ape.setup import deploy_mock_erc20
-from backtest_ape.curve.v2.setup import (
-    deploy_mock_lp,
-    deploy_mock_pool,
-)
 
 
 def test_deploy_mock_lp(acc):

@@ -1,19 +1,19 @@
-import click
+from typing import Any, ClassVar, List
 
+import click
 from ape import Contract
+
 from backtest_ape.base import BaseRunner
 from backtest_ape.setup import deploy_mock_erc20
-from backtest_ape.utils import get_test_account
 from backtest_ape.uniswap.v3.setup import (
+    create_mock_pool,
     deploy_mock_position_manager,
     deploy_mock_univ3_factory,
-    create_mock_pool,
 )
-from typing import Any, ClassVar, List
 
 
 class BaseUniswapV3Runner(BaseRunner):
-    _ref_keys: ClassVar[List[str]] = ["pool"]
+    _ref_keys: ClassVar[List[str]] = ["pool", "manager"]
 
     def __init__(self, **data: Any):
         """
@@ -26,21 +26,28 @@ class BaseUniswapV3Runner(BaseRunner):
         pool = self._refs["pool"]
         self._refs["tokens"] = [Contract(pool.token0()), Contract(pool.token1())]
 
-    def setup(self):
+    def setup(self, mocking: bool = True):
         """
-        Sets up Uniswap V3 runner for testing.
+        Sets up Uniswap V3 runner for testing. If mocking, deploys mock ERC20
+        tokens needed for pool, mock Uniswap V3 factory and mock Uniswap V3 position
+        manager. Deploys the mock pool through the factory.
 
-        Deploys mock ERC20 tokens needed for pool, mock Uniswap V3 factory
-        and mock Uniswap V3 position manager. Deploys the mock pool
-        through the factory.
+        Args:
+            mocking (bool): Whether to deploy mocks.
         """
-        acc = get_test_account()
-        self._acc = acc
+        if mocking:
+            self.deploy_mocks()
 
+    def deploy_mocks(self):
+        """
+        Deploys the mock contracts.
+        """
         # deploy the mock erc20s
         click.echo("Deploying mock ERC20 tokens ...")
         mock_tokens = [
-            deploy_mock_erc20(f"Mock Token{i}", token.symbol(), token.decimals(), acc)
+            deploy_mock_erc20(
+                f"Mock Token{i}", token.symbol(), token.decimals(), self.acc
+            )
             for i, token in enumerate(self._refs["tokens"])
         ]
 
@@ -49,16 +56,16 @@ class BaseUniswapV3Runner(BaseRunner):
             mock_tokens[0] if mock_tokens[0].symbol() == "WETH" else mock_tokens[1]
         )
         if mock_weth.symbol() != "WETH":
-            mock_weth = deploy_mock_erc20("Mock WETH9", "WETH", 18, acc)
+            mock_weth = deploy_mock_erc20("Mock WETH9", "WETH", 18, self.acc)
 
         # deploy the mock univ3 factory
         click.echo("Deploying mock Uniswap V3 factory ...")
-        mock_factory = deploy_mock_univ3_factory(acc)
+        mock_factory = deploy_mock_univ3_factory(self.acc)
 
         # deploy the mock NFT position manager
         # NOTE: uses zero address for descriptor so tokenURI will fail
         click.echo("Deploying the mock position manager ...")
-        mock_manager = deploy_mock_position_manager(mock_factory, mock_weth, acc)
+        mock_manager = deploy_mock_position_manager(mock_factory, mock_weth, self.acc)
 
         # create the pool through the mock univ3 factory
         fee = 3000  # default fee of 0.3%
@@ -68,7 +75,7 @@ class BaseUniswapV3Runner(BaseRunner):
             mock_tokens,
             fee,
             price,
-            acc,
+            self.acc,
         )
 
         self._mocks = {

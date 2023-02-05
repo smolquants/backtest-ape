@@ -32,7 +32,7 @@ contract CurveV2LPBacktest is Backtest {
 
         // adjust amount for rounding
         // See https://github.com/curvefi/tricrypto-ng/blob/main/contracts/old/CurveCryptoSwap.vy#L844
-        amount -= 1;
+        if (amount > 0) amount -= 1;
 
         // underlying token balances owned are pro-rata share w.r.t. lp amount of total tokens in pool
         for (uint256 i = 0; i < numCoins; ++i) {

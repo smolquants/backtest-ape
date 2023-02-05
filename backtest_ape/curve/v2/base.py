@@ -1,18 +1,15 @@
-import click
-
-from ape import Contract
-from backtest_ape.base import BaseRunner
-from backtest_ape.setup import deploy_mock_erc20
-from backtest_ape.utils import get_test_account
-from backtest_ape.curve.v2.setup import (
-    deploy_mock_pool,
-    deploy_mock_lp,
-)
 from typing import Any, ClassVar, List
+
+import click
+from ape import Contract
+
+from backtest_ape.base import BaseRunner
+from backtest_ape.curve.v2.setup import deploy_mock_lp, deploy_mock_pool
+from backtest_ape.setup import deploy_mock_erc20
 
 
 class BaseCurveV2Runner(BaseRunner):
-    num_coins: int
+    num_coins: int = 0
     _ref_keys: ClassVar[List[str]] = ["pool"]
 
     def __init__(self, **data: Any):
@@ -39,24 +36,30 @@ class BaseCurveV2Runner(BaseRunner):
         # store pool lp token in _refs
         self._refs["lp"] = Contract(pool.token())
 
-    def setup(self):
+    def setup(self, mocking: bool = True):
         """
-        Sets up Curve V2 runner for testing.
+        Sets up Curve V2 runner for testing. Deploys mock ERC20 tokens needed
+        for pool and mock Curve V2 pool, if mocking.
 
-        Deploys mock ERC20 tokens needed for pool and mock Curve V2 pool.
+        Args:
+            mocking (bool): Whether to deploy mocks.
         """
-        acc = get_test_account()
-        self._acc = acc
+        if mocking:
+            self.deploy_mocks()
 
+    def deploy_mocks(self):
+        """
+        Deploys the mock contracts.
+        """
         # deploy the mock erc20s
         click.echo("Deploying mock ERC20 tokens ...")
         mock_coins = [
-            deploy_mock_erc20(f"Mock Coin{i}", coin.symbol(), coin.decimals(), acc)
+            deploy_mock_erc20(f"Mock Coin{i}", coin.symbol(), coin.decimals(), self.acc)
             for i, coin in enumerate(self._refs["coins"])
         ]
 
         # deploy the mock lp token and mint existing liquidity tokens
-        mock_lp = deploy_mock_lp("Mock Curve V2 LP", "crv3m", acc)
+        mock_lp = deploy_mock_lp("Mock Curve V2 LP", "crv3m", self.acc)
 
         # deploy the mock curve v2 pool
         A = 1000000  # 10**6
@@ -82,7 +85,7 @@ class BaseCurveV2Runner(BaseRunner):
             admin_fee,
             ma_half_time,
             [price, price],
-            acc,
+            self.acc,
         )
 
         self._mocks = {

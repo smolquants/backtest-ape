@@ -1,7 +1,8 @@
-from ape import project
-from ape.contracts import ContractInstance
-from ape.api.accounts import AccountAPI
 from typing import List
+
+from ape import project
+from ape.api.accounts import AccountAPI
+from ape.contracts import ContractInstance
 
 
 def deploy_mock_lp(name: str, symbol: str, acc: AccountAPI) -> ContractInstance:

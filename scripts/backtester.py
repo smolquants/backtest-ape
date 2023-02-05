@@ -1,9 +1,10 @@
-import click
-import backtest_ape
-
-from ape import networks
 from ast import literal_eval
+
+import click
+from ape import networks
 from typing_inspect import get_origin
+
+import backtest_ape
 
 
 def main():
@@ -33,6 +34,15 @@ def main():
         # default to str if not base type
         type_origin = get_origin(field.annotation)
         type_ = field.annotation if type_origin is None else str
+
+        # confirm prompt if Optional
+        if field.default is None:
+            if not click.confirm(
+                f"Runner kwarg ({name}) defaults to None. Do you want to input a value?"
+            ):
+                kwargs[name] = field.default
+                continue
+
         value = click.prompt(
             f"Runner kwarg ({name})", default=field.default, type=type_
         )
@@ -45,15 +55,23 @@ def main():
 
     # setup runner
     runner = runner_cls(**kwargs)
-    runner.setup()
+
+    # prompt user for choice of method: backtest, replay, or forwardtest
+    method_name = click.prompt(
+        "Method",
+        type=click.Choice(["backtest", "replay", "forwardtest"], case_sensitive=False),
+    )
 
     # run backtest
-    # TODO: choice for back or forward testing
     start = click.prompt("Start block number", type=int)
     stop = click.prompt("Stop block number", type=int, default=-1)
     step = click.prompt("Step size", type=int, default=1)
-    path = f"scripts/results/{runner_cls_name}_{start}_{stop}_{step}.csv"
+    path = f"scripts/results/{runner_cls_name}_{method_name}_{start}_{stop}_{step}.csv"
     if stop < 0:
         stop = None
 
-    runner.backtest(path, start, stop, step)
+    args = [path, start, stop]
+    if method_name != "replay":
+        args.append(step)
+
+    getattr(runner, method_name)(*args)
