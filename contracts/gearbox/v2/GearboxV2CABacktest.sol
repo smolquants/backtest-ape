@@ -20,6 +20,6 @@ contract GearboxV2CABacktest is Backtest {
     /// @return value_ The current value of the credit account
     function value() public view virtual override returns (uint256 value_) {
         address account = ICreditManagerV2(manager).creditAccounts(address(this));
-        (value_,) = ICreditFacade(facade).calcTotalValue(account);
+        (value_, ) = ICreditFacade(facade).calcTotalValue(account);
     }
 }
