@@ -45,4 +45,8 @@ contract MockAggregatorV3 is Setter, AggregatorV3Interface {
     function latestRoundData() public view returns (uint80, int256, uint256, uint256, uint80) {
         return getRoundData(latestRoundId);
     }
+
+    function setRounds(RoundData memory _round) external {
+        rounds[_round.roundId] = _round;
+    }
 }
