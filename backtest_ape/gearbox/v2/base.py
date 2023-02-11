@@ -1,13 +1,14 @@
 from typing import Any, ClassVar, List
 
 import click
-from ape import Contract
+from ape import Contract, accounts
 
 from backtest_ape.base import BaseRunner
 from backtest_ape.gearbox.v2.setup import deploy_mock_feed
 
 
 class BaseGearboxV2Runner(BaseRunner):
+    collateral_addrs: ClassVar[List[str]] = []
     _ref_keys: ClassVar[List[str]] = ["manager"]
 
     def __init__(self, **data: Any):
@@ -41,13 +42,15 @@ class BaseGearboxV2Runner(BaseRunner):
     def setup(self, mocking: bool = True):
         """
         Sets up Gearbox V2 runner for testing. Deploys mock Chainlink
-        oracles, if mocking.
+        oracles, if mocking, and sets mocks as feeds on price oracle
+        for specified collateral addresses.
 
         Args:
             mocking (bool): Whether to deploy mocks.
         """
         if mocking:
             self.deploy_mocks()
+            self.configure_mocks()
 
     def deploy_mocks(self):
         """
@@ -65,3 +68,20 @@ class BaseGearboxV2Runner(BaseRunner):
             for i, feed in enumerate(self._refs["feeds"])
         ]
         self._mocks = {"feeds": mock_feeds}
+
+    def configure_mocks(self):
+        """
+        Configures the mock contracts.
+        """
+        click.echo("Configuring mock feeds ...")
+        price_oracle = self._refs["price_oracle"]
+        acl = Contract(price_oracle._acl())
+        configurator = accounts[acl.owner()]  # impersonate configurator
+
+        token_addrs = [token.address for token in self._refs["tokens"]]
+        for collateral_addr in self.collateral_addrs:
+            i = token_addrs.index(collateral_addr)  # get the index in ref
+            mock_feed = self._mocks["feeds"][i]
+            price_oracle.addPriceFeed(
+                collateral_addr, mock_feed.address, sender=configurator
+            )
