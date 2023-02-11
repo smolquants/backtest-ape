@@ -1,4 +1,4 @@
-from typing import ClassVar, List
+from typing import ClassVar, List, Mapping
 
 from backtest_ape.gearbox.v2.base import BaseGearboxV2Runner
 
@@ -25,3 +25,18 @@ class GearboxV2STETHRunner(BaseGearboxV2Runner):
         manager_addr = self._refs["manager"].address
         self.deploy_strategy(*[manager_addr])
         self._initialized = True
+
+    def init_mocks_state(self, state: Mapping):
+        """
+        Initializes the state of mocks.
+
+        Overrides BaseGearboxV2Runner::init_mocks_state to setup
+        backtester.
+
+        Args:
+            state(Mapping): The init state of mocks.
+        """
+        super().init_mocks_state(state)
+
+        # TODO: deploy backtester with a call to self.backtester.multicall
+        # TODO: that creates the stETH strategy through backtester contract
