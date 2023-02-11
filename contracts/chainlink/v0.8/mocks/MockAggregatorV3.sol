@@ -49,7 +49,7 @@ contract MockAggregatorV3 is Setter, AggregatorV3Interface {
     function setRound(RoundData memory _round) external {
         rounds[_round.roundId] = _round;
     }
-    
+
     function setLatestRoundId(uint80 _roundId) external {
         require(rounds[_roundId].roundId == _roundId, "round does not exist");
         latestRoundId = _roundId;
