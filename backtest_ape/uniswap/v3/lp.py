@@ -5,8 +5,8 @@ import pandas as pd
 from ape import chain
 from hexbytes import HexBytes
 
-from backtest_ape.utils import get_block_identifier
 from backtest_ape.uniswap.v3.base import BaseUniswapV3Runner
+from backtest_ape.utils import get_block_identifier
 
 
 class UniswapV3LPRunner(BaseUniswapV3Runner):

@@ -1,6 +1,7 @@
+from contextlib import contextmanager
+
 import pytest
 from ape import Contract, chain, networks
-from contextlib import contextmanager
 
 from backtest_ape.base import BaseRunner
 

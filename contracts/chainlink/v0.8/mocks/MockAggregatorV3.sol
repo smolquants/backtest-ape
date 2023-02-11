@@ -19,9 +19,9 @@ contract MockAggregatorV3 is Setter, AggregatorV3Interface {
     mapping(uint80 => RoundData) public rounds;
     uint80 public latestRoundId;
 
-    constructor(uint8 _decimals, string memory _description, uint256 _version) {
-        decimals = _decimals;
+    constructor(string memory _description, uint8 _decimals, uint256 _version) {
         description = _description;
+        decimals = _decimals;
         version = _version;
     }
 
@@ -46,7 +46,7 @@ contract MockAggregatorV3 is Setter, AggregatorV3Interface {
         return getRoundData(latestRoundId);
     }
 
-    function setRounds(RoundData memory _round) external {
+    function setRound(RoundData memory _round) external {
         rounds[_round.roundId] = _round;
     }
 }

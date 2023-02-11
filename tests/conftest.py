@@ -1,5 +1,5 @@
 import pytest
-from ape import accounts, Contract
+from ape import Contract, accounts
 
 
 @pytest.fixture(scope="session")

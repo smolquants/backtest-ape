@@ -5,8 +5,8 @@ import pandas as pd
 from ape import chain
 from pydantic import validator
 
-from backtest_ape.utils import get_block_identifier
 from backtest_ape.curve.v2.base import BaseCurveV2Runner
+from backtest_ape.utils import get_block_identifier
 
 
 class CurveV2LPRunner(BaseCurveV2Runner):
