@@ -100,12 +100,6 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("deploy_mocks not implemented.")
 
-    def configure_mocks(self):
-        """
-        Configures the mock contracts.
-        """
-        raise NotImplementedError("configure_mocks not implemented.")
-
     def init_mocks_state(self, state: Mapping):
         """
         Initializes the state of mocks.

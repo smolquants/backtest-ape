@@ -46,7 +46,6 @@ class BaseCurveV2Runner(BaseRunner):
         """
         if mocking:
             self.deploy_mocks()
-            self.configure_mocks()
 
     def deploy_mocks(self):
         """
@@ -94,10 +93,3 @@ class BaseCurveV2Runner(BaseRunner):
             "lp": mock_lp,
             "pool": mock_pool,
         }
-
-    def configure_mocks(self):
-        """
-        Configures the mock contracts.
-        """
-        # NOTE: pass since no config needed
-        pass

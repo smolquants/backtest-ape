@@ -37,7 +37,6 @@ class BaseUniswapV3Runner(BaseRunner):
         """
         if mocking:
             self.deploy_mocks()
-            self.configure_mocks()
 
     def deploy_mocks(self):
         """
@@ -85,10 +84,3 @@ class BaseUniswapV3Runner(BaseRunner):
             "manager": mock_manager,
             "pool": mock_pool,
         }
-
-    def configure_mocks(self):
-        """
-        Configures the mock contracts.
-        """
-        # NOTE: pass since no config needed
-        pass
