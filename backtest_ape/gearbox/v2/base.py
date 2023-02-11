@@ -1,15 +1,33 @@
-from typing import Any, ClassVar, List, Mapping, Optional
+from enum import Enum
+from typing import Any, ClassVar, List, Mapping, Optional, Tuple
 
 import click
 from ape import Contract, accounts, chain
+from ape.contracts import ContractInstance
 
 from backtest_ape.base import BaseRunner
 from backtest_ape.gearbox.v2.setup import deploy_mock_feed
 from backtest_ape.utils import get_block_identifier
 
 
+class PriceFeedType(Enum):
+    CHAINLINK_ORACLE = 0
+    YEARN_ORACLE = 1
+    CURVE_2LP_ORACLE = 2
+    CURVE_3LP_ORACLE = 3
+    CURVE_4LP_ORACLE = 4
+    ZERO_ORACLE = 5
+    WSTETH_ORACLE = 6
+    BOUNDED_ORACLE = 7
+    COMPOSITE_ETH_ORACLE = 8
+
+
 class BaseGearboxV2Runner(BaseRunner):
     collateral_addrs: ClassVar[List[str]] = []
+    supported_feed_types: ClassVar[List[int]] = [
+        PriceFeedType.CHAINLINK_ORACLE.value,
+        PriceFeedType.COMPOSITE_ETH_ORACLE.value,
+    ]
     _ref_keys: ClassVar[List[str]] = ["manager"]
 
     def __init__(self, **data: Any):
@@ -36,7 +54,6 @@ class BaseGearboxV2Runner(BaseRunner):
         self._refs["tokens"] = tokens
 
         # store feeds associated with collateral tokens in _refs
-        # TODO: fix since sometimes will be custom Gearbox feed instead of Chainlink
         self._refs["feeds"] = [
             Contract(price_oracle.priceFeeds(token.address)) for token in tokens
         ]
@@ -70,6 +87,43 @@ class BaseGearboxV2Runner(BaseRunner):
         ]
         self._mocks = {"feeds": mock_feeds}
 
+    def _get_feed_data(self, feed: ContractInstance, number: int) -> Tuple:
+        """
+        Gets reference feed data to be set in associated mock. Transforms
+        the fetched data from reference feeds if needed to consolidate
+        Gearbox oracle types into Chainlink only X/USD oracle.
+
+        Args:
+            feed (:class:`ape.contracts.ContractInstance`): The reference feed.
+            number (int): The reference block number.
+
+        Returns:
+            Tuple: The Chainlink round data.
+        """
+        price_feed_type = feed.priceFeedType()
+        if price_feed_type not in self.supported_feed_types:
+            raise ValueError(f"feed {feed.address} not supported type")
+
+        data = tuple()
+        if price_feed_type == PriceFeedType.CHAINLINK_ORACLE.value:
+            data = tuple(feed.lastRoundData(block_identifier=number))
+        elif price_feed_type == PriceFeedType.COMPOSITE_ETH_ORACLE.value:
+            # query the underlying eth/usd and x/eth feeds at number
+            feed_eth_usd = Contract(feed.ethUsdPriceFeed())
+            feed_target = Contract(feed.targetEthPriceFeed())
+            answer_denom = feed.answerDenominator()
+
+            # return target relative to USD at number
+            round_data = feed_target.latestRoundData(block_identifier=number)
+            round_data_eth_usd = feed_eth_usd.latestRoundData(block_identifier=number)
+            round_data.answer = int(
+                round_data.answer * round_data_eth_usd.answer / answer_denom
+            )
+
+            data = tuple(round_data)
+
+        return data
+
     def get_refs_state(self, number: Optional[int] = None) -> Mapping:
         """
         Get the state of references at given block.
@@ -87,7 +141,7 @@ class BaseGearboxV2Runner(BaseRunner):
         tokens = self._refs["tokens"]
 
         state = {
-            tuple(feed.latestRoundData(block_identifier=block_identifier))
+            self._get_feed_data(feed, block_identifier)
             for i, feed in enumerate(feeds)
             if tokens[i].address in self.collateral_addrs
         }
@@ -127,15 +181,15 @@ class BaseGearboxV2Runner(BaseRunner):
         ecosystem = chain.provider.network.ecosystem
 
         for i, mock_feed in enumerate(mock_feeds):
-            round = state["feeds"][i]  # round data tuple
-            round_id = round[0]
+            round_data = state["feeds"][i]  # round data tuple
+            round_id = round_data[0]
 
             # stores latest round data and sets latest round id
             datas = [
                 ecosystem.encode_transaction(
                     mock_feed.address,
                     mock_feed.setRound.abis[0],
-                    round,
+                    round_data,
                 ).data,
                 ecosystem.encode_transaction(
                     mock_feed.address,
