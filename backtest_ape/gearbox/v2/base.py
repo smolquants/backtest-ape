@@ -1,7 +1,9 @@
+import os
 from enum import Enum
 from typing import Any, ClassVar, List, Mapping, Optional, Tuple
 
 import click
+import pandas as pd
 from ape import Contract, accounts, chain
 from ape.contracts import ContractInstance
 
@@ -139,12 +141,14 @@ class BaseGearboxV2Runner(BaseRunner):
         block_identifier = get_block_identifier(number)
         feeds = self._refs["feeds"]
         tokens = self._refs["tokens"]
+        state = {}
 
-        state = {
+        state["feeds"] = [
             self._get_feed_data(feed, block_identifier)
-            for i, feed in enumerate(feeds)
             if tokens[i].address in self.collateral_addrs
-        }
+            else tuple()
+            for i, feed in enumerate(feeds)
+        ]
         return state
 
     def init_mocks_state(self, state: Mapping):
@@ -182,6 +186,9 @@ class BaseGearboxV2Runner(BaseRunner):
 
         for i, mock_feed in enumerate(mock_feeds):
             round_data = state["feeds"][i]  # round data tuple
+            if round_data == tuple():
+                continue
+
             round_id = round_data[0]
 
             # stores latest round data and sets latest round id
@@ -198,3 +205,46 @@ class BaseGearboxV2Runner(BaseRunner):
                 ).data,
             ]
             mock_feed.calls(datas, sender=self.acc)
+
+    def init_strategy(self):
+        """
+        Initializes the strategy being backtested through backtester contract
+        at the given block.
+        """
+        # TODO:
+        pass
+
+    def update_strategy(self):
+        """
+        Updates the strategy being backtested through backtester contract.
+
+        NOTE: Passing means passive strategy.
+        """
+        pass
+
+    def record(self, path: str, number: int, state: Mapping, value: int):
+        """
+        Records the value and possibly some state at the given block.
+
+        Args:
+            path (str): The path to the csv file to write the record to.
+            number (int): The block number.
+            state (Mapping): The state of references at block number.
+            value (int): The value of the backtester for the state.
+        """
+        data = {"number": number, "value": value}
+
+        # only add value from oracle feed
+        feeds = self._refs["feeds"]
+        for i, feed in enumerate(feeds):
+            round_data = state["feeds"][i]
+            if round_data == tuple():
+                continue
+
+            k = feed.description()
+            data[k] = round_data[1]  # round_data.answer
+
+        # append row to csv file
+        header = not os.path.exists(path)
+        df = pd.DataFrame(data={k: [v] for k, v in data.items()})
+        df.to_csv(path, index=False, mode="a", header=header)
