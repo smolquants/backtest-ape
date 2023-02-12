@@ -102,13 +102,17 @@ class BaseGearboxV2Runner(BaseRunner):
         Returns:
             Tuple: The Chainlink round data.
         """
-        price_feed_type = feed.priceFeedType()
+        price_feed_type = (
+            feed.priceFeedType()
+            if hasattr(feed, "priceFeedType")
+            else PriceFeedType.CHAINLINK_ORACLE.value
+        )
         if price_feed_type not in self.supported_feed_types:
             raise ValueError(f"feed {feed.address} not supported type")
 
         data = tuple()
         if price_feed_type == PriceFeedType.CHAINLINK_ORACLE.value:
-            data = tuple(feed.lastRoundData(block_identifier=number))
+            data = tuple(feed.latestRoundData(block_identifier=number))
         elif price_feed_type == PriceFeedType.COMPOSITE_ETH_ORACLE.value:
             # query the underlying eth/usd and x/eth feeds at number
             feed_eth_usd = Contract(feed.ethUsdPriceFeed())
@@ -116,10 +120,10 @@ class BaseGearboxV2Runner(BaseRunner):
             answer_denom = feed.answerDenominator()
 
             # return target relative to USD at number
-            round_data = feed_target.latestRoundData(block_identifier=number)
-            round_data_eth_usd = feed_eth_usd.latestRoundData(block_identifier=number)
+            round_data_target = feed_target.latestRoundData(block_identifier=number)
+            round_data = feed_eth_usd.latestRoundData(block_identifier=number)
             round_data.answer = int(
-                round_data.answer * round_data_eth_usd.answer / answer_denom
+                round_data.answer * round_data_target.answer / answer_denom
             )
 
             data = tuple(round_data)

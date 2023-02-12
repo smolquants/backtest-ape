@@ -23,5 +23,10 @@ def WETH9():
 
 
 @pytest.fixture(scope="session")
+def STETH():
+    yield Contract("0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84")
+
+
+@pytest.fixture(scope="session")
 def bridge():
     yield accounts["0x40ec5b33f54e0e8a33a975908c5ba1c14e5bbbdf"]
