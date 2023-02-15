@@ -1,5 +1,7 @@
 import os
 
+import numpy as np
+import pandas as pd
 import pytest
 
 from backtest_ape.gearbox.v2.steth import GearboxV2STETHRunner
@@ -82,4 +84,38 @@ def test_set_mocks_state(runner):
 
 
 def test_record(runner, path):
-    pass
+    runner.setup()
+    number = 16254713
+    state_feeds = [
+        (
+            92233720368547797298,
+            121963000000,
+            1671882923,
+            1671882923,
+            92233720368547797298,
+        ),
+        (
+            92233720368547797298,
+            120786558687,
+            1671882923,
+            1671882923,
+            92233720368547797298,
+        ),
+    ]
+    state_feeds += [tuple() for _ in range(len(runner._refs["feeds"]) - 2)]
+    state = {"feeds": state_feeds}
+    value = 100000000000000000  # 1e18
+    runner.record(path, number, state, value)
+
+    # check pd dataframe has new row
+    df = pd.read_csv(path)
+    np.testing.assert_equal(
+        list(df.columns),
+        ["number", "value", "ETH / USD", "STETH / ETH ETH/USD Composite"],
+    )
+
+    row = df.iloc[0]
+    assert int(row["number"]) == int(number)
+    assert int(row["value"]) == int(value)
+    assert int(row["ETH / USD"]) == int(state["feeds"][0][1])
+    assert int(row["STETH / ETH ETH/USD Composite"]) == int(state["feeds"][1][1])
