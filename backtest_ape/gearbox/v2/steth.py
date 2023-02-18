@@ -59,11 +59,13 @@ class GearboxV2STETHRunner(BaseGearboxV2Runner):
         super().init_mocks_state(state)
 
         ecosystem = chain.provider.network.ecosystem
+        manager = self._refs["manager"]
         facade = self._refs["facade"]
         adapter = self._refs["adapter"]
+        collateral = self._refs["collaterals"][0]
 
-        # create the stETH strategy through backtester contract
-        target = facade.address
+        # approve WETH for manager to spend, create the stETH strategy thru backtester
+        targets = [collateral.address, facade.address]
         calls = [
             (
                 adapter.address,
@@ -74,13 +76,23 @@ class GearboxV2STETHRunner(BaseGearboxV2Runner):
                 ).data,
             )
         ]
-        data = ecosystem.encode_transaction(
-            facade.address,
-            facade.openCreditAccountMulticall.abis[0],
-            self.borrow_amount,
-            self.backtester.address,
-            calls,
-            0,
-        ).data
-        val = self.collateral_amount
-        self.backtester.execute(target, data, val, sender=self.acc, value=val)
+        datas = [
+            ecosystem.encode_transaction(
+                collateral.address,
+                collateral.approve.abis[0],
+                manager.address,
+                2**256 - 1,
+            ).data,
+            ecosystem.encode_transaction(
+                facade.address,
+                facade.openCreditAccountMulticall.abis[0],
+                self.borrow_amount,
+                self.backtester.address,
+                calls,
+                0,
+            ).data,
+        ]
+        values = [0, self.collateral_amount]
+        self.backtester.multicall(
+            targets, datas, values, sender=self.acc, value=self.collateral_amount
+        )
