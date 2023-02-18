@@ -4,12 +4,16 @@ from typing import Any, ClassVar, List, Mapping, Optional, Tuple
 
 import click
 import pandas as pd
-from ape import Contract, accounts, chain
+from ape import Contract, chain
 from ape.contracts import ContractInstance
 
 from backtest_ape.base import BaseRunner
 from backtest_ape.gearbox.v2.setup import deploy_mock_feed
-from backtest_ape.utils import get_block_identifier
+from backtest_ape.utils import (
+    fund_account,
+    get_block_identifier,
+    get_impersonated_account,
+)
 
 
 class PriceFeedType(Enum):
@@ -41,6 +45,8 @@ class BaseGearboxV2Runner(BaseRunner):
         super().__init__(**data)
 
         # store the facade contract in _refs
+        # NOTE: assumes debt taken from only one credit manager
+        # TODO: allow for multiple credit managers
         manager = self._refs["manager"]
         self._refs["facade"] = Contract(manager.creditFacade())
 
@@ -49,15 +55,17 @@ class BaseGearboxV2Runner(BaseRunner):
         self._refs["price_oracle"] = price_oracle
 
         # store supported collateral contracts in _refs
-        tokens = [
+        collaterals = [
             Contract(manager.collateralTokens(i).token)
             for i in range(manager.collateralTokensCount())
+            if manager.collateralTokens(i).token in self.collateral_addrs
         ]
-        self._refs["tokens"] = tokens
+        self._refs["collaterals"] = collaterals
 
         # store feeds associated with collateral tokens in _refs
         self._refs["feeds"] = [
-            Contract(price_oracle.priceFeeds(token.address)) for token in tokens
+            Contract(price_oracle.priceFeeds(collateral.address))
+            for collateral in collaterals
         ]
 
     def setup(self, mocking: bool = True):
@@ -141,17 +149,12 @@ class BaseGearboxV2Runner(BaseRunner):
         Returns:
             Mapping: The state of references at block.
         """
-        # only get ref state for collateral addrs care about
         block_identifier = get_block_identifier(number)
         feeds = self._refs["feeds"]
-        tokens = self._refs["tokens"]
-        state = {}
 
+        state = {}
         state["feeds"] = [
-            self._get_feed_data(feed, block_identifier)
-            if tokens[i].address in self.collateral_addrs
-            else tuple()
-            for i, feed in enumerate(feeds)
+            self._get_feed_data(feed, block_identifier) for i, feed in enumerate(feeds)
         ]
         return state
 
@@ -164,18 +167,18 @@ class BaseGearboxV2Runner(BaseRunner):
         """
         price_oracle = self._refs["price_oracle"]
         acl = Contract(price_oracle._acl())
-        configurator = accounts[acl.owner()]  # impersonate configurator
+        configurator = get_impersonated_account(acl.owner())
+        fund_account(configurator.address, self._initial_acc_balance)
 
         # set the latest round data and round ID on the mock feeds
         self.set_mocks_state(state)
 
         # sets mocks as price feeds in ref price oracle contract
-        token_addrs = [token.address for token in self._refs["tokens"]]
-        for collateral_addr in self.collateral_addrs:
-            i = token_addrs.index(collateral_addr)  # get the index in ref
+        collaterals = self._refs["collaterals"]
+        for i, collateral in enumerate(collaterals):
             mock_feed = self._mocks["feeds"][i]
             price_oracle.addPriceFeed(
-                collateral_addr, mock_feed.address, sender=configurator
+                collateral.address, mock_feed.address, sender=configurator
             )
 
     def set_mocks_state(self, state: Mapping):

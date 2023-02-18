@@ -1,11 +1,19 @@
+from typing import ClassVar, List
+
 import pytest
 
 from backtest_ape.gearbox.v2.base import BaseGearboxV2Runner
 
 
+class Runner(BaseGearboxV2Runner):
+    collateral_addrs: ClassVar[List[str]] = [
+        "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+    ]
+
+
 @pytest.fixture
 def runner():
-    return BaseGearboxV2Runner(
+    return Runner(
         ref_addrs={
             "manager": "0x5887ad4Cb2352E7F01527035fAa3AE0Ef2cE2b9B",
         },

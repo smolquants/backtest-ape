@@ -1,21 +1,21 @@
 from typing import Any, ClassVar, List, Mapping
 
-from ape import Contract, chain
+from ape import chain
 from ape.utils import ZERO_ADDRESS
 
 from backtest_ape.gearbox.v2.base import BaseGearboxV2Runner
 
 
 class GearboxV2STETHRunner(BaseGearboxV2Runner):
+    collateral_amount: int
+    borrow_amount: int
     collateral_addrs: ClassVar[List[str]] = [
         "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",  # WETH
         "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",  # stETH
     ]
-    adapter_addr: ClassVar[str] = "0x711198f626C329CD2212f3100B59BD7dd2aD6697"
-    collateral_amount: int = 10000000000000000000  # 1e20 (min beta size is $100K)
-    borrow_amount: int = 0  # 1x leverage
 
-    _backtester_name = "GearboxV2CABacktest"
+    _backtester_name: ClassVar[str] = "GearboxV2CABacktest"
+    _ref_keys: ClassVar[List[str]] = ["manager", "adapter"]
 
     def __init__(self, **data: Any):
         """
@@ -26,9 +26,9 @@ class GearboxV2STETHRunner(BaseGearboxV2Runner):
 
         # check adapter supported by credit manager
         manager = self._refs["manager"]
-        if manager.adapterToContract(self.adapter_addr) == ZERO_ADDRESS:
+        adapter = self._refs["adapter"]
+        if manager.adapterToContract(adapter.address) == ZERO_ADDRESS:
             raise ValueError("adapter not supported by manager")
-        self._refs["adapter"] = Contract(self.adapter_addr)
 
     def setup(self, mocking: bool = True):
         """
@@ -71,7 +71,7 @@ class GearboxV2STETHRunner(BaseGearboxV2Runner):
                     adapter.address,
                     adapter.submit.abis[0],
                     self.collateral_amount + self.borrow_amount,
-                ),
+                ).data,
             )
         ]
         data = ecosystem.encode_transaction(
@@ -81,6 +81,6 @@ class GearboxV2STETHRunner(BaseGearboxV2Runner):
             self.backtester.address,
             calls,
             0,
-        )
+        ).data
         val = self.collateral_amount
-        self.backtester.execute(target, data, val, sender=self.acc)
+        self.backtester.execute(target, data, val, sender=self.acc, value=val)

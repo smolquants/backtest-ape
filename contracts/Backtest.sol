@@ -7,6 +7,7 @@ abstract contract Backtest {
     constructor() {}
 
     /// @notice Executes a tx for the strategy
+    /// @dev See https://github.com/Uniswap/v3-periphery/blob/main/contracts/base/Multicall.sol
     /// @param target The address of the contract to call
     /// @param data The calldata to call the target with
     /// @param val The msg.value to pay the target
@@ -14,7 +15,14 @@ abstract contract Backtest {
     function execute(address target, bytes calldata data, uint256 val) public payable returns (bytes memory result_) {
         require(val <= msg.value, "msg.value < value");
         (bool success, bytes memory result) = target.call{value: val}(data);
-        if (!success) revert("failed to execute strategy");
+        if (!success) {
+            // Next 5 lines from https://ethereum.stackexchange.com/a/83577
+            if (result.length < 68) revert("failed to execute strategy");
+            assembly {
+                result := add(result, 0x04)
+            }
+            revert(abi.decode(result, (string)));
+        }
         result_ = result;
     }
 

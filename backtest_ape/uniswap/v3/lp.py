@@ -1,5 +1,5 @@
 import os
-from typing import Mapping, Optional
+from typing import ClassVar, Mapping, Optional
 
 import pandas as pd
 from ape import chain
@@ -14,7 +14,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
     tick_upper: int = 0
     amount_weth: int = 0
     amount_token: int = 0
-    _backtester_name = "UniswapV3LPBacktest"
+    _backtester_name: ClassVar[str] = "UniswapV3LPBacktest"
 
     def setup(self, mocking: bool = True):
         """

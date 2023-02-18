@@ -9,9 +9,13 @@ from backtest_ape.gearbox.v2.steth import GearboxV2STETHRunner
 
 @pytest.fixture
 def runner():
-    # TODO: amount and leverage
     return GearboxV2STETHRunner(
-        ref_addrs={"manager": "0x5887ad4Cb2352E7F01527035fAa3AE0Ef2cE2b9B"},
+        ref_addrs={
+            "manager": "0x5887ad4Cb2352E7F01527035fAa3AE0Ef2cE2b9B",
+            "adapter": "0x711198f626C329CD2212f3100B59BD7dd2aD6697",
+        },
+        collateral_amount=100000000000000000000,  # 100 WETH
+        borrow_amount=400000000000000000000,  # 400 WETH
     )
 
 
@@ -23,7 +27,7 @@ def path():
     return p
 
 
-def test_get_refs_state(runner, WETH9, STETH):
+def test_get_refs_state(runner):
     number = 16254713
     state = runner.get_refs_state(number)
     expect = [
@@ -42,12 +46,32 @@ def test_get_refs_state(runner, WETH9, STETH):
             92233720368547797298,
         ),
     ]
-    expect += [tuple() for _ in range(len(runner._refs["feeds"]) - 2)]
     assert state["feeds"] == expect
 
 
-def test_init_mocks_state(runner):
-    pass
+def test_init_mocks_state(runner, STETH):
+    runner.setup()
+    state_feeds = [
+        (
+            92233720368547797298,
+            121963000000,
+            1671882923,
+            1671882923,
+            92233720368547797298,
+        ),
+        (
+            92233720368547797298,
+            120786558687,
+            1671882923,
+            1671882923,
+            92233720368547797298,
+        ),
+    ]
+    state = {"feeds": state_feeds}
+    runner.init_mocks_state(state)
+
+    # TODO: check mocks init'd and backtester contract entered into position
+    # TODO: so holds ~ 500 stETH
 
 
 def test_set_mocks_state(runner):
@@ -68,7 +92,6 @@ def test_set_mocks_state(runner):
             92233720368547797298,
         ),
     ]
-    state_feeds += [tuple() for _ in range(len(runner._refs["feeds"]) - 2)]
     state = {"feeds": state_feeds}
     runner.set_mocks_state(state)
 
@@ -102,7 +125,6 @@ def test_record(runner, path):
             92233720368547797298,
         ),
     ]
-    state_feeds += [tuple() for _ in range(len(runner._refs["feeds"]) - 2)]
     state = {"feeds": state_feeds}
     value = 100000000000000000  # 1e18
     runner.record(path, number, state, value)
