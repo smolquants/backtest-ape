@@ -6,6 +6,7 @@ import click
 import pandas as pd
 from ape import Contract, chain
 from ape.contracts import ContractInstance
+from ape.utils import ZERO_ADDRESS
 
 from backtest_ape.base import BaseRunner
 from backtest_ape.gearbox.v2.setup import deploy_mock_feed
@@ -165,6 +166,7 @@ class BaseGearboxV2Runner(BaseRunner):
         Args:
             state (Mapping): The init state of mocks.
         """
+        facade = self._refs["facade"]
         price_oracle = self._refs["price_oracle"]
         acl = Contract(price_oracle._acl())
         configurator = get_impersonated_account(acl.owner())
@@ -180,6 +182,13 @@ class BaseGearboxV2Runner(BaseRunner):
             price_oracle.addPriceFeed(
                 collateral.address, mock_feed.address, sender=configurator
             )
+
+        # mints a degen NFT to backtester if needed for whitelist
+        if facade.degenNFT() != ZERO_ADDRESS:
+            degen_nft = Contract(facade.degenNFT())
+            minter = get_impersonated_account(degen_nft.minter())
+            fund_account(minter, self._initial_acc_balance)
+            degen_nft.mint(self.backtester.address, 1, sender=minter)
 
     def set_mocks_state(self, state: Mapping):
         """

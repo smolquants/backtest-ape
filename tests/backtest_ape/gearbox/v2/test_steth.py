@@ -15,7 +15,7 @@ def runner():
             "adapter": "0x711198f626C329CD2212f3100B59BD7dd2aD6697",
         },
         collateral_amount=100000000000000000000,  # 100 WETH
-        borrow_amount=400000000000000000000,  # 400 WETH
+        leverage_factor=400,  # 400 WETH borrow
     )
 
 
@@ -49,7 +49,7 @@ def test_get_refs_state(runner):
     assert state["feeds"] == expect
 
 
-def test_init_mocks_state(runner, STETH):
+def test_init_mocks_state(runner, WETH9, STETH):
     runner.setup()
     state_feeds = [
         (
@@ -70,8 +70,19 @@ def test_init_mocks_state(runner, STETH):
     state = {"feeds": state_feeds}
     runner.init_mocks_state(state)
 
-    # TODO: check mocks init'd and backtester contract entered into position
-    # TODO: so holds ~ 500 stETH
+    # check mock price feeds added for collaterals
+    price_oracle = runner._refs["price_oracle"]
+    collaterals = runner._refs["collaterals"]
+    for i, collateral in enumerate(collaterals):
+        mock_feed = runner._mocks["feeds"][i]
+        feed_addr = price_oracle.priceFeeds(collateral.address)
+        assert mock_feed.address == feed_addr
+
+    # check mocks init'd and backtester contract entered into stETH position
+    manager = runner._refs["manager"]
+    credit_account_addr = manager.creditAccounts(runner.backtester.address)
+    assert WETH9.allowance(runner.backtester.address, manager.address) == 2**256 - 1
+    assert STETH.balanceOf(credit_account_addr) == pytest.approx(500000000000000000000)
 
 
 def test_set_mocks_state(runner):

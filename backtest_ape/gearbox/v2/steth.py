@@ -8,7 +8,7 @@ from backtest_ape.gearbox.v2.base import BaseGearboxV2Runner
 
 class GearboxV2STETHRunner(BaseGearboxV2Runner):
     collateral_amount: int
-    borrow_amount: int
+    leverage_factor: int
     collateral_addrs: ClassVar[List[str]] = [
         "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",  # WETH
         "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",  # stETH
@@ -64,18 +64,9 @@ class GearboxV2STETHRunner(BaseGearboxV2Runner):
         adapter = self._refs["adapter"]
         collateral = self._refs["collaterals"][0]
 
-        # approve WETH for manager to spend, create the stETH strategy thru backtester
-        targets = [collateral.address, facade.address]
-        calls = [
-            (
-                adapter.address,
-                ecosystem.encode_transaction(
-                    adapter.address,
-                    adapter.submit.abis[0],
-                    self.collateral_amount + self.borrow_amount,
-                ).data,
-            )
-        ]
+        # approve WETH for manager to spend, create credit account,
+        # then use credit account to enter stETH strategy
+        targets = [collateral.address, facade.address, adapter.address]
         datas = [
             ecosystem.encode_transaction(
                 collateral.address,
@@ -85,14 +76,18 @@ class GearboxV2STETHRunner(BaseGearboxV2Runner):
             ).data,
             ecosystem.encode_transaction(
                 facade.address,
-                facade.openCreditAccountMulticall.abis[0],
-                self.borrow_amount,
+                facade.openCreditAccount.abis[0],
+                self.collateral_amount,
                 self.backtester.address,
-                calls,
+                self.leverage_factor,
                 0,
             ).data,
+            ecosystem.encode_transaction(
+                adapter.address,
+                adapter.submitAll.abis[0],
+            ).data,
         ]
-        values = [0, self.collateral_amount]
+        values = [0, self.collateral_amount, 0]
         self.backtester.multicall(
             targets, datas, values, sender=self.acc, value=self.collateral_amount
         )
