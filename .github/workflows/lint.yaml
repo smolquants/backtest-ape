@@ -39,8 +39,11 @@ jobs:
     - name: Build with hatch
       run: hatch build
       
-    - name: Run Black
+    - name: Run black
       run: hatch run black --check .
+
+    - name: Run isort
+      run: hatch run isort --check-only . --profile black
 
     - name: Run flake8
       run: hatch run flake8 backtest_ape tests scripts

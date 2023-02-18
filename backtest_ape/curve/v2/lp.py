@@ -1,17 +1,17 @@
 import os
-from typing import Any, List, Mapping, Optional
+from typing import Any, ClassVar, List, Mapping, Optional
 
 import pandas as pd
 from ape import chain
 from pydantic import validator
 
-from backtest_ape.utils import get_block_identifier
 from backtest_ape.curve.v2.base import BaseCurveV2Runner
+from backtest_ape.utils import get_block_identifier
 
 
 class CurveV2LPRunner(BaseCurveV2Runner):
     amounts: List[int] = []
-    _backtester_name = "CurveV2LPBacktest"
+    _backtester_name: ClassVar[str] = "CurveV2LPBacktest"
 
     @validator("amounts")
     def amounts_len_equals_num_coins(cls, v, values, **kwargs):

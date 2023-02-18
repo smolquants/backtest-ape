@@ -1,6 +1,7 @@
+from typing import Optional
+
 from ape import accounts, chain
 from ape.api.accounts import AccountAPI
-from typing import Optional
 
 
 def get_test_account() -> AccountAPI:

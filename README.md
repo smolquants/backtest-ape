@@ -50,3 +50,8 @@ from block 16048833 to 16273534:
 
 ![](notebook/assets/curve/v2/lp.png)
 
+[Gearbox V2 stETH strategy (5x leverage)](scripts/results/GearboxV2STETHRunner_backtest_14805946_15078047_300.csv)
+from block 14805946 to 15078047:
+
+![](notebook/assets/gearbox/v2/steth.png)
+
