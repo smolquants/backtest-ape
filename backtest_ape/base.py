@@ -9,8 +9,7 @@ from ape.contracts import ContractInstance
 from ape.exceptions import ContractLogicError
 from pydantic import BaseModel, validator
 
-from backtest_ape.utils import (fund_account, get_impersonated_account,
-                                get_test_account)
+from backtest_ape.utils import fund_account, get_impersonated_account, get_test_account
 
 
 class BaseRunner(BaseModel):

@@ -5,9 +5,11 @@ from ape import Contract
 
 from backtest_ape.base import BaseRunner
 from backtest_ape.setup import deploy_mock_erc20
-from backtest_ape.uniswap.v3.setup import (create_mock_pool,
-                                           deploy_mock_position_manager,
-                                           deploy_mock_univ3_factory)
+from backtest_ape.uniswap.v3.setup import (
+    create_mock_pool,
+    deploy_mock_position_manager,
+    deploy_mock_univ3_factory,
+)
 
 
 class BaseUniswapV3Runner(BaseRunner):

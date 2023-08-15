@@ -10,8 +10,11 @@ from ape.utils import ZERO_ADDRESS
 
 from backtest_ape.base import BaseRunner
 from backtest_ape.gearbox.v2.setup import deploy_mock_feed
-from backtest_ape.utils import (fund_account, get_block_identifier,
-                                get_impersonated_account)
+from backtest_ape.utils import (
+    fund_account,
+    get_block_identifier,
+    get_impersonated_account,
+)
 
 
 class PriceFeedType(Enum):
