@@ -4,16 +4,14 @@ import pytest
 from ape.contracts import ContractInstance
 
 from backtest_ape.setup import deploy_mock_erc20
-from backtest_ape.uniswap.v3.setup import (
-    create_mock_pool,
-    deploy_mock_position_manager,
-    deploy_mock_univ3_factory,
-)
+from backtest_ape.uniswap.v3.setup import (create_mock_pool,
+                                           deploy_mock_position_manager,
+                                           deploy_mock_univ3_factory)
 
 
 def test_deploy_mock_univ3_factory(acc):
     factory = deploy_mock_univ3_factory(acc)
-    assert type(factory) == ContractInstance
+    assert isinstance(factory, ContractInstance) is True
     assert factory.owner() == acc.address
     assert factory.feeAmountTickSpacing(500) == 10
     assert factory.feeAmountTickSpacing(3000) == 60
@@ -24,7 +22,7 @@ def test_deploy_mock_position_manager(acc):
     factory = deploy_mock_univ3_factory(acc)
     weth = deploy_mock_erc20("WETH9", "WETH", 18, acc)
     manager = deploy_mock_position_manager(factory, weth, acc)
-    assert type(manager) == ContractInstance
+    assert isinstance(manager, ContractInstance) is True
     assert manager.factory() == factory.address
     assert manager.WETH9() == weth.address
 

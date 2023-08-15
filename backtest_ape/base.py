@@ -9,7 +9,8 @@ from ape.contracts import ContractInstance
 from ape.exceptions import ContractLogicError
 from pydantic import BaseModel, validator
 
-from backtest_ape.utils import fund_account, get_impersonated_account, get_test_account
+from backtest_ape.utils import (fund_account, get_impersonated_account,
+                                get_test_account)
 
 
 class BaseRunner(BaseModel):
@@ -136,9 +137,13 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("init_strategy not implemented.")
 
-    def update_strategy(self):
+    def update_strategy(self, number: int, state: Mapping):
         """
         Updates the strategy being backtested through backtester contract.
+
+        Args:
+            number (int): The block number.
+            state (Mapping): The state of references at block number.
         """
         raise NotImplementedError("update_strategy not implemented.")
 
@@ -273,7 +278,7 @@ class BaseRunner(BaseModel):
 
             # update backtested strategy based off new mock state, if needed
             click.echo(f"Updating strategy at block {number} ...")
-            self.update_strategy()
+            self.update_strategy(number, refs_state)
 
             # replenish funds for acc
             click.echo("Replenishing funds in account ...")
@@ -344,7 +349,7 @@ class BaseRunner(BaseModel):
 
             # update backtested strategy based off current chain state, if needed
             click.echo(f"Updating strategy at block {number} ...")
-            self.update_strategy()
+            self.update_strategy(number, refs_state)
 
             # replenish funds for acc
             click.echo("Replenishing funds in account ...")

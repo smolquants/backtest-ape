@@ -6,7 +6,7 @@ from backtest_ape.setup import deploy_mock_erc20
 
 def test_deploy_mock_lp(acc):
     tok = deploy_mock_lp("Mock Curve Token", "crv3m", acc)
-    assert type(tok) == ContractInstance
+    assert isinstance(tok, ContractInstance) is True
     assert tok.name() == "Mock Curve Token"
     assert tok.symbol() == "crv3m"
 
