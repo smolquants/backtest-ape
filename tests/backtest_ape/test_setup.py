@@ -5,7 +5,7 @@ from backtest_ape.setup import deploy_mock_erc20
 
 def test_deploy_mock_erc20(acc):
     tok = deploy_mock_erc20("Mock Token", "MOK", 18, acc)
-    assert type(tok) == ContractInstance
+    assert isinstance(tok, ContractInstance) is True
     assert tok.name() == "Mock Token"
     assert tok.symbol() == "MOK"
     assert tok.decimals() == 18

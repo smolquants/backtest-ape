@@ -1,5 +1,5 @@
 import pytest
-from ape import Contract, accounts
+from ape import Contract, accounts, project
 
 
 @pytest.fixture(scope="session")
@@ -19,7 +19,7 @@ def bob(accounts):
 
 @pytest.fixture(scope="session")
 def WETH9():
-    yield Contract("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+    yield project.WETH9.at("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
 
 
 @pytest.fixture(scope="session")

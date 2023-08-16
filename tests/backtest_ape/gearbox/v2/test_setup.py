@@ -5,7 +5,7 @@ from backtest_ape.gearbox.v2.setup import deploy_mock_feed
 
 def test_deploy_mock_feed(acc):
     feed = deploy_mock_feed("Mock Feed", 6, 1, acc)
-    assert type(feed) == ContractInstance
+    assert isinstance(feed, ContractInstance) is True
     assert feed.description() == "Mock Feed"
     assert feed.decimals() == 6
     assert feed.version() == 1

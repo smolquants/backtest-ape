@@ -217,11 +217,15 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         # execute through backtester
         self.backtester.multicall(targets, datas, values, sender=self.acc)
 
-    def update_strategy(self):
+    def update_strategy(self, number: int, state: Mapping):
         """
         Updates the strategy being backtested through backtester contract.
 
         NOTE: Passing means passive LP.
+
+        Args:
+            number (int): The block number.
+            state (Mapping): The state of references at block number.
         """
         pass
 

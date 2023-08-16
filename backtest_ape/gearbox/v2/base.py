@@ -230,11 +230,15 @@ class BaseGearboxV2Runner(BaseRunner):
         # TODO:
         pass
 
-    def update_strategy(self):
+    def update_strategy(self, number: int, state: Mapping):
         """
         Updates the strategy being backtested through backtester contract.
 
         NOTE: Passing means passive strategy.
+
+        Args:
+            number (int): The block number.
+            state (Mapping): The state of references at block number.
         """
         pass
 
