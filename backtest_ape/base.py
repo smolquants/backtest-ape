@@ -210,6 +210,7 @@ class BaseRunner(BaseModel):
             _ = chain.provider.send_transaction(tx)
         except ContractLogicError:
             # let txs that revert fail silently
+            # TODO: fix
             pass
 
     def submit_txs(self, txs: List[TransactionAPI]):
