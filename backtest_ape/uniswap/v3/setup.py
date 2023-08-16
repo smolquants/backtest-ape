@@ -34,7 +34,7 @@ def create_mock_pool(
     factory: ContractInstance,
     tokens: List[ContractInstance],
     fee: int,
-    price: int,
+    sqrt_price_x96: int,
     acc: AccountAPI,
 ) -> ContractInstance:
     """
@@ -49,6 +49,5 @@ def create_mock_pool(
     pool = project.MockUniswapV3Pool.at(pool_addr)
 
     # initialize the pool prior to returning
-    sqrt_price_x96 = int((price) ** (1 / 2)) << 96
     pool.initialize(sqrt_price_x96, sender=acc)
     return pool
