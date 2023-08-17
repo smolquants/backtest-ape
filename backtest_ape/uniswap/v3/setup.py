@@ -3,6 +3,7 @@ from typing import List
 from ape import project
 from ape.api.accounts import AccountAPI
 from ape.contracts import ContractInstance
+from ape.utils import ZERO_ADDRESS
 
 
 def deploy_mock_univ3_factory(acc: AccountAPI) -> ContractInstance:
@@ -26,7 +27,7 @@ def deploy_mock_position_manager(
         :class:`ape.contracts.ContractInstance`
     """
     return project.MockNonfungiblePositionManager.deploy(
-        factory.address, weth.address, sender=acc
+        factory.address, weth.address, ZERO_ADDRESS, sender=acc
     )
 
 

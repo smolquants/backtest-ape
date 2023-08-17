@@ -126,7 +126,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         mint_params = (
             mock_weth.address,
             mock_token.address,
-            3000,
+            mock_pool.fee(),
             self.tick_lower,
             self.tick_upper,
             self.amount_weth,
