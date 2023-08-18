@@ -14,7 +14,6 @@ from backtest_ape.uniswap.v3.setup import (
 def test_deploy_mock_univ3_factory(acc):
     factory = deploy_mock_univ3_factory(acc)
     assert isinstance(factory, ContractInstance) is True
-    assert factory.owner() == acc.address
     assert factory.feeAmountTickSpacing(500) == 10
     assert factory.feeAmountTickSpacing(3000) == 60
     assert factory.feeAmountTickSpacing(10000) == 200
