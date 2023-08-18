@@ -10,7 +10,7 @@ def runner():
     tick_lower = 200280  # ~ 2000 * 1e6 USDC per 1e18 WETH
     tick_upper = 207240  # ~ 1000 * 1e6 USDC per 1e18 WETH
     amount_weth = 67000000000000000000  # 67 * 1e18 WETH
-    amount_token = 100000000000  # 100,000 * 1e6 USDC
+    amount_token = 34434075000  # 34,434.075 * 1e6 USDC
     return UniswapV3LPRunner(
         ref_addrs={
             "pool": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8",
@@ -98,11 +98,13 @@ def test_init_mocks_state(runner):
     mock_token = mock_tokens[1] if mock_tokens[0].symbol() == "WETH" else mock_tokens[0]
 
     # check allowances set to infinity for weth, token
-    allowance_weth = mock_weth.allowance(runner._backtester.address, mock_pool.address)
+    allowance_weth = mock_weth.allowance(
+        runner._backtester.address, mock_manager.address
+    )
     assert allowance_weth == 2**256 - 1
 
     allowance_token = mock_token.allowance(
-        runner._backtester.address, mock_pool.address
+        runner._backtester.address, mock_manager.address
     )
     assert allowance_token == 2**256 - 1
 

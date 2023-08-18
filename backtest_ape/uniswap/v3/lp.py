@@ -3,7 +3,6 @@ from typing import ClassVar, Mapping, Optional
 
 import pandas as pd
 from ape import chain
-from hexbytes import HexBytes
 
 from backtest_ape.uniswap.v3.base import BaseUniswapV3Runner
 from backtest_ape.utils import get_block_identifier
@@ -129,31 +128,35 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         self.backtester.multicall(targets, datas, values, sender=self.acc)
 
         # then mint the LP position
+        amount0_desired = (
+            self.amount_weth if mock_tokens[0] == mock_weth else self.amount_token
+        )
+        amount1_desired = (
+            self.amount_token if mock_tokens[0] == mock_weth else self.amount_weth
+        )
         mint_params = (
-            mock_weth.address,
-            mock_token.address,
+            mock_tokens[0].address,  # token0
+            mock_tokens[1].address,  # token1
             mock_pool.fee(),
             self.tick_lower,
             self.tick_upper,
-            self.amount_weth,
-            self.amount_token,
+            amount0_desired,
+            amount1_desired,
             0,
             0,
             self.backtester.address,
             chain.blocks.head.timestamp + 86400,
         )
-        receipt = self.backtester.execute(
+        self.backtester.execute(
             mock_manager.address,
             ecosystem.encode_transaction(
                 mock_manager.address, mock_manager.mint.abis[0], mint_params
             ).data,
             0,
             sender=self.acc,
-        )  # TODO: fix
-        result = receipt.return_value
-        if result == HexBytes("0x"):
-            raise ValueError("unexpected result from multicall for token ID")
-        token_id = int(bytes(result))  # TODO: check
+        )
+
+        token_id = self.backtester.count() + 1
 
         # store token id in backtester
         self.backtester.push(token_id, sender=self.acc)
@@ -186,7 +189,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
                 state["tick_info_upper"].feeGrowthOutside1X128,
             ).data,
         ]
-        mock_pool.calls(datas)
+        mock_pool.calls(datas, sender=self.acc)
 
     def update_strategy(self, number: int, state: Mapping):
         """
