@@ -76,12 +76,18 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         Args:
             state (Mapping): The init state of mocks.
         """
-        # TODO: Fix for general tokens
-        mock_weth = self._mocks["weth"]
-        mock_token = self._mocks["token"]
+        mock_tokens = self._mocks["tokens"]
         mock_manager = self._mocks["manager"]
         mock_pool = self._mocks["pool"]
         ecosystem = chain.provider.network.ecosystem
+
+        # TODO: Fix for general tokens
+        mock_weth = (
+            mock_tokens[0] if mock_tokens[0].symbol() == "WETH" else mock_tokens[1]
+        )
+        mock_token = (
+            mock_tokens[1] if mock_tokens[0].symbol() == "WETH" else mock_tokens[0]
+        )
 
         # set the tick first for position manager add liquidity to work properly
         mock_pool.setTick(state["slot0"].tick, sender=self.acc)

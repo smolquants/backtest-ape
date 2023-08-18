@@ -71,7 +71,47 @@ def test_get_refs_state(runner):
 
 
 def test_init_mocks_state(runner):
-    pass
+    runner.setup()
+
+    number = 16254713
+    ref_pool = runner._refs["pool"]
+    state = {
+        "slot0": ref_pool.slot0(block_identifier=number),
+        "liquidity": 12591259481453220445,
+        "fee_growth_global0_x128": 2888042077048564188809648235097692,
+        "fee_growth_global1_x128": 1330797012137927971917418324177509306984464,
+        "tick_info_lower": ref_pool.ticks(runner.tick_lower, block_identifier=number),
+        "tick_info_upper": ref_pool.ticks(runner.tick_upper, block_identifier=number),
+    }
+    runner.init_mocks_state(state)
+
+    # check position nft minted and pushed to backtest contract
+    mock_manager = runner._mocks["manager"]
+    token_id = 1
+    assert runner._backtester.tokenIds(0) == token_id
+    assert mock_manager.positions(token_id).liquidity > 0
+
+    mock_pool = runner._mocks["pool"]
+    mock_tokens = runner._mocks["tokens"]
+
+    mock_weth = mock_tokens[0] if mock_tokens[0].symbol() == "WETH" else mock_tokens[1]
+    mock_token = mock_tokens[1] if mock_tokens[0].symbol() == "WETH" else mock_tokens[0]
+
+    # check allowances set to infinity for weth, token
+    allowance_weth = mock_weth.allowance(runner._backtester.address, mock_pool.address)
+    assert allowance_weth == 2**256 - 1
+
+    allowance_token = mock_token.allowance(
+        runner._backtester.address, mock_pool.address
+    )
+    assert allowance_token == 2**256 - 1
+
+    # check amounts sent to pool for lp position
+    balance_weth_pool = mock_weth.balanceOf(mock_pool.address)
+    assert pytest.approx(balance_weth_pool) == runner.amount_weth
+
+    balance_token_pool = mock_token.balanceOf(mock_pool.address)
+    assert pytest.approx(balance_token_pool) == runner.amount_token
 
 
 def test_set_mocks_state(runner):
