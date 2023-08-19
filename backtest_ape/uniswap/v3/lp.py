@@ -213,15 +213,28 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
             state (Mapping): The state of references at block number.
             value (int): The value of the backtester for the state.
         """
-        header = not os.path.exists(path)
-        df = pd.DataFrame(
-            data={
-                "number": number,
-                "tick": state["slot0"].tick,
+        data = {"number": number, "value": value}
+        data.update(
+            {
+                "sqrtPriceX96": state["slot0"].sqrtPriceX96,
                 "liquidity": state["liquidity"],
                 "feeGrowthGlobal0X128": state["fee_growth_global0_x128"],
                 "feeGrowthGlobal1X128": state["fee_growth_global1_x128"],
-                "value": value,
+                "tickLowerFeeGrowthOutside0X128": state[
+                    "tick_info_lower"
+                ].feeGrowthOutside0X128,
+                "tickLowerFeeGrowthOutside1X128": state[
+                    "tick_info_lower"
+                ].feeGrowthOutside1X128,
+                "tickUpperFeeGrowthOutside0X128": state[
+                    "tick_info_upper"
+                ].feeGrowthOutside0X128,
+                "tickUpperFeeGrowthOutside1X128": state[
+                    "tick_info_upper"
+                ].feeGrowthOutside1X128,
             }
         )
+
+        header = not os.path.exists(path)
+        df = pd.DataFrame(data={k: [v] for k, v in data.items()})
         df.to_csv(path, index=False, mode="a", header=header)

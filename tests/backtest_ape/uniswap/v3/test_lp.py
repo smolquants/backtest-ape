@@ -1,5 +1,7 @@
 import os
 
+import numpy as np
+import pandas as pd
 import pytest
 
 from backtest_ape.uniswap.v3.lp import UniswapV3LPRunner
@@ -154,5 +156,56 @@ def test_set_mocks_state(runner):
     )
 
 
-def test_record(runner):
-    pass
+def test_record(runner, path):
+    runner.setup()
+    df = pd.DataFrame()
+    number = 16254713
+    ref_pool = runner._refs["pool"]
+    state = {
+        "slot0": ref_pool.slot0(block_identifier=number),
+        "liquidity": 12591259481453220445,
+        "fee_growth_global0_x128": 2888042077048564188809648235097692,
+        "fee_growth_global1_x128": 1330797012137927971917418324177509306984464,
+        "tick_info_lower": ref_pool.ticks(runner.tick_lower, block_identifier=number),
+        "tick_info_upper": ref_pool.ticks(runner.tick_upper, block_identifier=number),
+    }
+    value = int(120 * 1e18)
+    runner.record(path, number, state, value)
+
+    # check pd dataframe has new row
+    df = pd.read_csv(path)
+    np.testing.assert_equal(
+        list(df.columns),
+        [
+            "number",
+            "value",
+            "sqrtPriceX96",
+            "liquidity",
+            "feeGrowthGlobal0X128",
+            "feeGrowthGlobal1X128",
+            "tickLowerFeeGrowthOutside0X128",
+            "tickLowerFeeGrowthOutside1X128",
+            "tickUpperFeeGrowthOutside0X128",
+            "tickUpperFeeGrowthOutside1X128",
+        ],
+    )
+
+    row = df.iloc[0]
+    assert int(row["number"]) == int(number)
+    assert int(row["value"]) == int(value)
+    assert int(row["sqrtPriceX96"]) == int(state["slot0"].sqrtPriceX96)
+    assert int(row["liquidity"]) == int(state["liquidity"])
+    assert int(row["feeGrowthGlobal0X128"]) == int(state["fee_growth_global0_x128"])
+    assert int(row["feeGrowthGlobal1X128"]) == int(state["fee_growth_global1_x128"])
+    assert int(row["tickLowerFeeGrowthOutside0X128"]) == int(
+        state["tick_info_lower"].feeGrowthOutside0X128
+    )
+    assert int(row["tickLowerFeeGrowthOutside1X128"]) == int(
+        state["tick_info_lower"].feeGrowthOutside1X128
+    )
+    assert int(row["tickUpperFeeGrowthOutside0X128"]) == int(
+        state["tick_info_upper"].feeGrowthOutside0X128
+    )
+    assert int(row["tickUpperFeeGrowthOutside1X128"]) == int(
+        state["tick_info_upper"].feeGrowthOutside1X128
+    )
