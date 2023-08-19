@@ -12,7 +12,7 @@ def runner():
     tick_lower = 200280  # ~ 2000 * 1e6 USDC per 1e18 WETH
     tick_upper = 207240  # ~ 1000 * 1e6 USDC per 1e18 WETH
     amount_weth = 67000000000000000000  # 67 * 1e18 WETH
-    amount_token = 34434075000  # 34,434.075 * 1e6 USDC
+    amount_token = 34427240000  # 34,427.24 * 1e6 USDC
     return UniswapV3LPRunner(
         ref_addrs={
             "pool": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8",
