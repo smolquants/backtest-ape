@@ -40,7 +40,7 @@ jobs:
       run: hatch run ape plugins install . --yes
 
     - name: Compile contracts
-      run: hatch run ape compile --size
+      run: hatch run ape compile --force --size
       
     - name: Run tests
       env:
