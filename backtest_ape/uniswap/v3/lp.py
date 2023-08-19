@@ -3,7 +3,6 @@ from typing import ClassVar, Mapping, Optional
 
 import pandas as pd
 from ape import chain
-from hexbytes import HexBytes
 
 from backtest_ape.uniswap.v3.base import BaseUniswapV3Runner
 from backtest_ape.utils import get_block_identifier
@@ -76,15 +75,21 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         Args:
             state (Mapping): The init state of mocks.
         """
-        # TODO: Fix for general tokens
-        mock_weth = self._mocks["weth"]
-        mock_token = self._mocks["token"]
+        mock_tokens = self._mocks["tokens"]
         mock_manager = self._mocks["manager"]
         mock_pool = self._mocks["pool"]
         ecosystem = chain.provider.network.ecosystem
 
+        # TODO: Fix for general tokens
+        mock_weth = (
+            mock_tokens[0] if mock_tokens[0].symbol() == "WETH" else mock_tokens[1]
+        )
+        mock_token = (
+            mock_tokens[1] if mock_tokens[0].symbol() == "WETH" else mock_tokens[0]
+        )
+
         # set the tick first for position manager add liquidity to work properly
-        mock_pool.setTick(state["slot0"].tick, sender=self.acc)
+        mock_pool.setSqrtPriceX96(state["slot0"].sqrtPriceX96, sender=self.acc)
 
         # mint both tokens to backtester, approve manager to transfer,
         targets = [
@@ -123,31 +128,35 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         self.backtester.multicall(targets, datas, values, sender=self.acc)
 
         # then mint the LP position
+        amount0_desired = (
+            self.amount_weth if mock_tokens[0] == mock_weth else self.amount_token
+        )
+        amount1_desired = (
+            self.amount_token if mock_tokens[0] == mock_weth else self.amount_weth
+        )
         mint_params = (
-            mock_weth.address,
-            mock_token.address,
-            3000,
+            mock_tokens[0].address,  # token0
+            mock_tokens[1].address,  # token1
+            mock_pool.fee(),
             self.tick_lower,
             self.tick_upper,
-            self.amount_weth,
-            self.amount_token,
+            amount0_desired,
+            amount1_desired,
             0,
             0,
             self.backtester.address,
             chain.blocks.head.timestamp + 86400,
         )
-        receipt = self.backtester.execute(
+        self.backtester.execute(
             mock_manager.address,
             ecosystem.encode_transaction(
                 mock_manager.address, mock_manager.mint.abis[0], mint_params
             ).data,
             0,
             sender=self.acc,
-        )  # TODO: fix
-        result = receipt.return_value
-        if result == HexBytes("0x"):
-            raise ValueError("unexpected result from multicall for token ID")
-        token_id = int(bytes(result))  # TODO: check
+        )
+
+        token_id = self.backtester.count() + 1
 
         # store token id in backtester
         self.backtester.push(token_id, sender=self.acc)
@@ -164,7 +173,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         """
         mock_pool = self._mocks["pool"]
         datas = [
-            mock_pool.setTick.as_transaction(state["slot0"].tick).data,
+            mock_pool.setSqrtPriceX96.as_transaction(state["slot0"].sqrtPriceX96).data,
             mock_pool.setLiquidity.as_transaction(state["liquidity"]).data,
             mock_pool.setFeeGrowthGlobalX128.as_transaction(
                 state["fee_growth_global0_x128"], state["fee_growth_global1_x128"]
@@ -180,7 +189,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
                 state["tick_info_upper"].feeGrowthOutside1X128,
             ).data,
         ]
-        mock_pool.calls(datas)
+        mock_pool.calls(datas, sender=self.acc)
 
     def update_strategy(self, number: int, state: Mapping):
         """
@@ -204,15 +213,28 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
             state (Mapping): The state of references at block number.
             value (int): The value of the backtester for the state.
         """
-        header = not os.path.exists(path)
-        df = pd.DataFrame(
-            data={
-                "number": number,
-                "tick": state["slot0"].tick,
+        data = {"number": number, "value": value}
+        data.update(
+            {
+                "sqrtPriceX96": state["slot0"].sqrtPriceX96,
                 "liquidity": state["liquidity"],
                 "feeGrowthGlobal0X128": state["fee_growth_global0_x128"],
                 "feeGrowthGlobal1X128": state["fee_growth_global1_x128"],
-                "value": value,
+                "tickLowerFeeGrowthOutside0X128": state[
+                    "tick_info_lower"
+                ].feeGrowthOutside0X128,
+                "tickLowerFeeGrowthOutside1X128": state[
+                    "tick_info_lower"
+                ].feeGrowthOutside1X128,
+                "tickUpperFeeGrowthOutside0X128": state[
+                    "tick_info_upper"
+                ].feeGrowthOutside0X128,
+                "tickUpperFeeGrowthOutside1X128": state[
+                    "tick_info_upper"
+                ].feeGrowthOutside1X128,
             }
         )
+
+        header = not os.path.exists(path)
+        df = pd.DataFrame(data={k: [v] for k, v in data.items()})
         df.to_csv(path, index=False, mode="a", header=header)

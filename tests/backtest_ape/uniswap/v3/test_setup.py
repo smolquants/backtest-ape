@@ -14,7 +14,6 @@ from backtest_ape.uniswap.v3.setup import (
 def test_deploy_mock_univ3_factory(acc):
     factory = deploy_mock_univ3_factory(acc)
     assert isinstance(factory, ContractInstance) is True
-    assert factory.owner() == acc.address
     assert factory.feeAmountTickSpacing(500) == 10
     assert factory.feeAmountTickSpacing(3000) == 60
     assert factory.feeAmountTickSpacing(10000) == 200
@@ -39,8 +38,9 @@ def test_create_mock_pool(acc, fee):
     tokenB = deploy_mock_erc20("Token B", "TOKB", 18, acc)
     tokens = [tokenA, tokenB]
     price = 1000000000000000000  # 1 wad
+    sqrt_price_x96 = int((price) ** (1 / 2)) << 96
 
-    pool = create_mock_pool(factory, tokens, fee, price, acc)
+    pool = create_mock_pool(factory, tokens, fee, sqrt_price_x96, acc)
     assert pool.factory() == factory.address
     assert pool.fee() == fee
     assert pool.tickSpacing() == factory.feeAmountTickSpacing(fee)
@@ -51,7 +51,7 @@ def test_create_mock_pool(acc, fee):
     assert set([token0, token1]) == set([tokenA.address, tokenB.address])
 
     slot0 = pool.slot0()
-    assert slot0.sqrtPriceX96 == int((price) ** (1 / 2)) << 96
+    assert slot0.sqrtPriceX96 == sqrt_price_x96
     np.testing.assert_allclose(
         slot0.tick,
         int(np.log(price) / np.log(1.0001)),

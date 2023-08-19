@@ -3,6 +3,7 @@ from typing import List
 from ape import project
 from ape.api.accounts import AccountAPI
 from ape.contracts import ContractInstance
+from ape.utils import ZERO_ADDRESS
 
 
 def deploy_mock_univ3_factory(acc: AccountAPI) -> ContractInstance:
@@ -12,8 +13,7 @@ def deploy_mock_univ3_factory(acc: AccountAPI) -> ContractInstance:
     Returns:
         :class:`ape.contracts.ContractInstance`
     """
-    deployer = project.MockUniswapV3PoolDeployer.deploy(sender=acc)
-    return project.MockUniswapV3Factory.deploy(deployer.address, sender=acc)
+    return project.MockUniswapV3Factory.deploy(sender=acc)
 
 
 def deploy_mock_position_manager(
@@ -26,7 +26,7 @@ def deploy_mock_position_manager(
         :class:`ape.contracts.ContractInstance`
     """
     return project.MockNonfungiblePositionManager.deploy(
-        factory.address, weth.address, sender=acc
+        factory.address, weth.address, ZERO_ADDRESS, sender=acc
     )
 
 
@@ -34,7 +34,7 @@ def create_mock_pool(
     factory: ContractInstance,
     tokens: List[ContractInstance],
     fee: int,
-    price: int,
+    sqrt_price_x96: int,
     acc: AccountAPI,
 ) -> ContractInstance:
     """
@@ -49,6 +49,5 @@ def create_mock_pool(
     pool = project.MockUniswapV3Pool.at(pool_addr)
 
     # initialize the pool prior to returning
-    sqrt_price_x96 = int((price) ** (1 / 2)) << 96
     pool.initialize(sqrt_price_x96, sender=acc)
     return pool

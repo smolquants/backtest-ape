@@ -28,6 +28,11 @@ contract UniswapV3LPBacktest is Backtest {
         tokenIds.push(tokenId);
     }
 
+    /// @notice Number of token ids pushed to list
+    function count() external view returns (uint256) {
+        return tokenIds.length;
+    }
+
     /// @notice Reports the ETH value of the LP token using TWAP for other token
     /// @return value_ The current ETH value of the LP tokens owned by this contract
     function value() public view virtual override returns (uint256 value_) {

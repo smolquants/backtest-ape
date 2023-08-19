@@ -68,13 +68,14 @@ class BaseUniswapV3Runner(BaseRunner):
         mock_manager = deploy_mock_position_manager(mock_factory, mock_weth, self.acc)
 
         # create the pool through the mock univ3 factory
-        fee = 3000  # default fee of 0.3%
-        price = 1000000000000000000  # 1 wad
+        pool = self._refs["pool"]
+        fee = pool.fee()
+        sqrt_price_x96 = pool.slot0().sqrtPriceX96
         mock_pool = create_mock_pool(
             mock_factory,
             mock_tokens,
             fee,
-            price,
+            sqrt_price_x96,
             self.acc,
         )
 

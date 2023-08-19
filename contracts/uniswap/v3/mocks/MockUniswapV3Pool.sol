@@ -8,9 +8,9 @@ import {Setter} from "../../../Setter.sol";
 /// @dev DO NOT ACTUALLY DEPLOY
 /// @dev See: https://github.com/Uniswap/v3-core/blob/0.8/contracts/UniswapV3Pool.sol
 contract MockUniswapV3Pool is UniswapV3Pool, Setter {
-    function setTick(int24 _tick) external {
-        slot0.tick = _tick;
-        slot0.sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
+    function setSqrtPriceX96(uint160 _sqrtPriceX96) external {
+        slot0.sqrtPriceX96 = _sqrtPriceX96;
+        slot0.tick = TickMath.getTickAtSqrtRatio(_sqrtPriceX96);
     }
 
     function setLiquidity(uint128 _liquidity) external {

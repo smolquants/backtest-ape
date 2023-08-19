@@ -34,13 +34,13 @@ jobs:
       run: hatch env create
             
     - name: Build with hatch
-      run: hatch build
+      run: hatch build --clean
     
     - name: Install Ape plugins
       run: hatch run ape plugins install . --yes
 
     - name: Compile contracts
-      run: hatch run ape compile --size
+      run: hatch run ape compile --force --size
       
     - name: Run tests
       env:
