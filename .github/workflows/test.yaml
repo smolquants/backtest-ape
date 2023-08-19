@@ -34,7 +34,7 @@ jobs:
       run: hatch env create
             
     - name: Build with hatch
-      run: hatch build
+      run: hatch build --clean
     
     - name: Install Ape plugins
       run: hatch run ape plugins install . --yes
