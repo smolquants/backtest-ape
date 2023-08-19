@@ -130,6 +130,28 @@ def test_set_mocks_state(runner):
     runner.set_mocks_state(state)
 
     # check mock pool updated to given state
+    mock_pool = runner._mocks["pool"]
+    assert mock_pool.slot0().tick == state["slot0"].tick
+    assert mock_pool.slot0().sqrtPriceX96 == state["slot0"].sqrtPriceX96
+    assert mock_pool.liquidity() == state["liquidity"]
+    assert mock_pool.feeGrowthGlobal0X128() == state["fee_growth_global0_x128"]
+    assert mock_pool.feeGrowthGlobal1X128() == state["fee_growth_global1_x128"]
+    assert (
+        mock_pool.ticks(runner.tick_lower).feeGrowthOutside0X128
+        == state["tick_info_lower"].feeGrowthOutside0X128
+    )
+    assert (
+        mock_pool.ticks(runner.tick_lower).feeGrowthOutside1X128
+        == state["tick_info_lower"].feeGrowthOutside1X128
+    )
+    assert (
+        mock_pool.ticks(runner.tick_upper).feeGrowthOutside0X128
+        == state["tick_info_upper"].feeGrowthOutside0X128
+    )
+    assert (
+        mock_pool.ticks(runner.tick_upper).feeGrowthOutside1X128
+        == state["tick_info_upper"].feeGrowthOutside1X128
+    )
 
 
 def test_record(runner):

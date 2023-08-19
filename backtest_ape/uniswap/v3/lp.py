@@ -89,7 +89,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         )
 
         # set the tick first for position manager add liquidity to work properly
-        mock_pool.setTick(state["slot0"].tick, sender=self.acc)
+        mock_pool.setSqrtPriceX96(state["slot0"].sqrtPriceX96, sender=self.acc)
 
         # mint both tokens to backtester, approve manager to transfer,
         targets = [
@@ -173,7 +173,7 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         """
         mock_pool = self._mocks["pool"]
         datas = [
-            mock_pool.setTick.as_transaction(state["slot0"].tick).data,
+            mock_pool.setSqrtPriceX96.as_transaction(state["slot0"].sqrtPriceX96).data,
             mock_pool.setLiquidity.as_transaction(state["liquidity"]).data,
             mock_pool.setFeeGrowthGlobalX128.as_transaction(
                 state["fee_growth_global0_x128"], state["fee_growth_global1_x128"]
