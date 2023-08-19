@@ -79,13 +79,6 @@ class BaseUniswapV3Runner(BaseRunner):
             self.acc,
         )
 
-        # reorder mock tokens for token0, token1
-        mock_token0 = mock_tokens[0]
-        mock_token1 = mock_tokens[1]
-        if mock_token0 != mock_pool.token0():
-            mock_tokens[0] = mock_token1
-            mock_tokens[1] = mock_token0
-
         self._mocks = {
             "tokens": mock_tokens,
             "factory": mock_factory,

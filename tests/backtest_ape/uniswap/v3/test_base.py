@@ -25,7 +25,15 @@ def test_setup(runner):
             "pool",
         ]
     )
+    assert [token.address for token in runner._refs["tokens"]] == [
+        runner._refs["pool"].token0(),
+        runner._refs["pool"].token1(),
+    ]
     assert set([token.symbol() for token in mocks["tokens"]]) == set(["WETH", "USDC"])
+    assert [token.address for token in mocks["tokens"]] == [
+        mocks["pool"].token0(),
+        mocks["pool"].token1(),
+    ]
     assert mocks["factory"].feeAmountTickSpacing(3000) == 60
     assert mocks["manager"].factory() == mocks["factory"].address
     assert mocks["pool"].fee() == 3000
@@ -34,4 +42,7 @@ def test_setup(runner):
             mocks["tokens"][0].address, mocks["tokens"][1].address, 3000
         )
         == mocks["pool"].address
+    )
+    assert (
+        mocks["pool"].slot0().sqrtPriceX96 == runner._refs["pool"].slot0().sqrtPriceX96
     )

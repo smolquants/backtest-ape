@@ -72,7 +72,6 @@ def test_get_refs_state(runner):
 
 def test_init_mocks_state(runner):
     runner.setup()
-
     number = 16254713
     ref_pool = runner._refs["pool"]
     state = {
@@ -117,7 +116,20 @@ def test_init_mocks_state(runner):
 
 
 def test_set_mocks_state(runner):
-    pass
+    runner.setup()
+    number = 16254713
+    ref_pool = runner._refs["pool"]
+    state = {
+        "slot0": ref_pool.slot0(block_identifier=number),
+        "liquidity": 12591259481453220445,
+        "fee_growth_global0_x128": 2888042077048564188809648235097692,
+        "fee_growth_global1_x128": 1330797012137927971917418324177509306984464,
+        "tick_info_lower": ref_pool.ticks(runner.tick_lower, block_identifier=number),
+        "tick_info_upper": ref_pool.ticks(runner.tick_upper, block_identifier=number),
+    }
+    runner.set_mocks_state(state)
+
+    # check mock pool updated to given state
 
 
 def test_record(runner):
