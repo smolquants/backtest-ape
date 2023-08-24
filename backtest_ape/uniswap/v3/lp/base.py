@@ -2,17 +2,18 @@ import os
 from typing import ClassVar, Mapping, Optional
 
 import pandas as pd
-from ape import chain
 
 from backtest_ape.uniswap.v3.base import BaseUniswapV3Runner
+from backtest_ape.uniswap.v3.lp.mgmt import mint_lp_position
+from backtest_ape.uniswap.v3.lp.setup import approve_mock_tokens, mint_mock_tokens
 from backtest_ape.utils import get_block_identifier
 
 
-class UniswapV3LPRunner(BaseUniswapV3Runner):
+class UniswapV3LPBaseRunner(BaseUniswapV3Runner):
     tick_lower: int = 0
     tick_upper: int = 0
-    amount_weth: int = 0
-    amount_token: int = 0
+    amount0: int = 0
+    amount1: int = 0
     _backtester_name: ClassVar[str] = "UniswapV3LPBacktest"
 
     def setup(self, mocking: bool = True):
@@ -78,84 +79,35 @@ class UniswapV3LPRunner(BaseUniswapV3Runner):
         mock_tokens = self._mocks["tokens"]
         mock_manager = self._mocks["manager"]
         mock_pool = self._mocks["pool"]
-        ecosystem = chain.provider.network.ecosystem
-
-        # TODO: Fix for general tokens
-        mock_weth = (
-            mock_tokens[0] if mock_tokens[0].symbol() == "WETH" else mock_tokens[1]
-        )
-        mock_token = (
-            mock_tokens[1] if mock_tokens[0].symbol() == "WETH" else mock_tokens[0]
-        )
 
         # set the tick first for position manager add liquidity to work properly
         mock_pool.setSqrtPriceX96(state["slot0"].sqrtPriceX96, sender=self.acc)
 
-        # mint both tokens to backtester, approve manager to transfer,
-        targets = [
-            mock_weth.address,
-            mock_token.address,
-            mock_weth.address,
-            mock_token.address,
-        ]
-        datas = [
-            ecosystem.encode_transaction(
-                mock_weth.address,
-                mock_weth.mint.abis[0],
-                self.backtester.address,
-                self.amount_weth,
-            ).data,
-            ecosystem.encode_transaction(
-                mock_token.address,
-                mock_token.mint.abis[0],
-                self.backtester.address,
-                self.amount_token,
-            ).data,
-            ecosystem.encode_transaction(
-                mock_weth.address,
-                mock_weth.approve.abis[0],
-                mock_manager.address,
-                2**256 - 1,
-            ).data,
-            ecosystem.encode_transaction(
-                mock_token.address,
-                mock_token.approve.abis[0],
-                mock_manager.address,
-                2**256 - 1,
-            ).data,
-        ]
-        values = [0, 0, 0, 0]
-        self.backtester.multicall(targets, datas, values, sender=self.acc)
+        # approve manager for infinite spend on mock tokens
+        approve_mock_tokens(
+            mock_tokens,
+            self.backtester,
+            mock_manager,
+            self.acc,
+        )
+
+        # mint both tokens to backtester
+        mint_mock_tokens(
+            mock_tokens,
+            self.backtester,
+            [self.amount0, self.amount1],
+            self.acc,
+        )
 
         # then mint the LP position
-        amount0_desired = (
-            self.amount_weth if mock_tokens[0] == mock_weth else self.amount_token
+        mint_lp_position(
+            mock_manager,
+            mock_pool,
+            self.backtester,
+            [self.tick_lower, self.tick_upper],
+            [self.amount0, self.amount1],
+            self.acc,
         )
-        amount1_desired = (
-            self.amount_token if mock_tokens[0] == mock_weth else self.amount_weth
-        )
-        mint_params = (
-            mock_tokens[0].address,  # token0
-            mock_tokens[1].address,  # token1
-            mock_pool.fee(),
-            self.tick_lower,
-            self.tick_upper,
-            amount0_desired,
-            amount1_desired,
-            0,
-            0,
-            self.backtester.address,
-            chain.blocks.head.timestamp + 86400,
-        )
-        self.backtester.execute(
-            mock_manager.address,
-            ecosystem.encode_transaction(
-                mock_manager.address, mock_manager.mint.abis[0], mint_params
-            ).data,
-            0,
-            sender=self.acc,
-        )
-
         token_id = self.backtester.count() + 1
 
         # store token id in backtester

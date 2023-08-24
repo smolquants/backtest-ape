@@ -4,24 +4,24 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from backtest_ape.uniswap.v3.lp import UniswapV3LPRunner
+from backtest_ape.uniswap.v3.lp import UniswapV3LPTotal1Runner
 
 
 @pytest.fixture
 def runner():
     tick_lower = 200280  # ~ 2000 * 1e6 USDC per 1e18 WETH
     tick_upper = 207240  # ~ 1000 * 1e6 USDC per 1e18 WETH
-    amount_weth = 67000000000000000000  # 67 * 1e18 WETH
-    amount_token = 34427240000  # 34,427.24 * 1e6 USDC
-    return UniswapV3LPRunner(
+    amount0 = 34427240000  # 34,427.24 * 1e6 USDC
+    amount1 = 67000000000000000000  # 67 * 1e18 WETH
+    return UniswapV3LPTotal1Runner(
         ref_addrs={
             "pool": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8",
             "manager": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
         },
         tick_lower=tick_lower,
         tick_upper=tick_upper,
-        amount_weth=amount_weth,
-        amount_token=amount_token,
+        amount0=amount0,
+        amount1=amount1,
     )
 
 
@@ -95,26 +95,23 @@ def test_init_mocks_state(runner):
     mock_pool = runner._mocks["pool"]
     mock_tokens = runner._mocks["tokens"]
 
-    mock_weth = mock_tokens[0] if mock_tokens[0].symbol() == "WETH" else mock_tokens[1]
-    mock_token = mock_tokens[1] if mock_tokens[0].symbol() == "WETH" else mock_tokens[0]
-
     # check allowances set to infinity for weth, token
-    allowance_weth = mock_weth.allowance(
+    allowance0 = mock_tokens[0].allowance(
         runner._backtester.address, mock_manager.address
     )
-    assert allowance_weth == 2**256 - 1
+    assert allowance0 == 2**256 - 1
 
-    allowance_token = mock_token.allowance(
+    allowance1 = mock_tokens[1].allowance(
         runner._backtester.address, mock_manager.address
     )
-    assert allowance_token == 2**256 - 1
+    assert allowance1 == 2**256 - 1
 
     # check amounts sent to pool for lp position
-    balance_weth_pool = mock_weth.balanceOf(mock_pool.address)
-    assert pytest.approx(balance_weth_pool) == runner.amount_weth
+    balance0_pool = mock_tokens[0].balanceOf(mock_pool.address)
+    assert pytest.approx(balance0_pool) == runner.amount0
 
-    balance_token_pool = mock_token.balanceOf(mock_pool.address)
-    assert pytest.approx(balance_token_pool) == runner.amount_token
+    balance1_pool = mock_tokens[1].balanceOf(mock_pool.address)
+    assert pytest.approx(balance1_pool) == runner.amount1
 
 
 def test_set_mocks_state(runner):
