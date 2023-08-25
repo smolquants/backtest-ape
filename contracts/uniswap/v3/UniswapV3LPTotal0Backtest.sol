@@ -2,7 +2,7 @@
 pragma solidity 0.8.12;
 
 import {UniswapV3LPBacktest} from "./UniswapV3LPBacktest.sol";
-import {PositionValue} from "@uniswap/v3-periphery/contracts/libraries/PositionValue.sol";
+import {MockPositionValue as PositionValue} from "./mocks/libraries/MockPositionValue.sol";
 
 /// @title Uniswap V3 Liquidity Provider Token0 Total Backtester
 /// @notice Backtests an LP position in pool reporting total token0 value (fees + principal) of LP tokens
