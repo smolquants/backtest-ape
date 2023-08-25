@@ -4,7 +4,7 @@ pragma solidity 0.8.12;
 import {Backtest} from "../../Backtest.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+import {IMockNonfungiblePositionManager as INonfungiblePositionManager} from "./mocks/interfaces/IMockNonfungiblePositionManager.sol";
 
 /// @title Uniswap V3 Liquidity Provider Backtester
 /// @notice Backtests an LP position in pool
