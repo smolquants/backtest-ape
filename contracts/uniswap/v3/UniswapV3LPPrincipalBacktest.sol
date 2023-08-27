@@ -4,14 +4,15 @@ pragma solidity 0.8.12;
 import {UniswapV3LPBacktest} from "./UniswapV3LPBacktest.sol";
 import {MockPositionValue as PositionValue} from "./mocks/libraries/MockPositionValue.sol";
 
-/// @title Uniswap V3 Liquidity Provider Token1 Principal Backtester
-/// @notice Backtests an LP position in pool reporting principal token1 value of LP tokens
-contract UniswapV3LPPrincipal1Backtest is UniswapV3LPBacktest {
+/// @title Uniswap V3 Liquidity Provider Principal Backtester
+/// @notice Backtests an LP position in pool reporting principal (token0, token1) values of LP tokens
+contract UniswapV3LPPrincipalBacktest is UniswapV3LPBacktest {
     constructor(address _manager) UniswapV3LPBacktest(_manager) {}
 
-    /// @notice Reports the principal token1 value of the LP tokens owned by this contract
-    /// @return value_ The current token1 principal of the LP tokens owned by this contract
-    function value() public view virtual override returns (uint256 value_) {
+    /// @notice Reports the principal (token0, token1) values of the LP tokens owned by this contract
+    /// @return values_ The current (token0, token1) principals of the LP tokens owned by this contract
+    function values() public view virtual override returns (uint256[] memory values_) {
+        uint256[] memory values_ = new uint256[](2);
         for (uint256 i = 0; i < tokenIds.length; ++i) {
             uint256 tokenId = tokenIds[i];
             (, , address token0, address token1, uint24 fee, , , , , , , ) = manager.positions(tokenId);
@@ -25,7 +26,8 @@ contract UniswapV3LPPrincipal1Backtest is UniswapV3LPBacktest {
                 tokenId,
                 sqrtRatioX96
             );
-            value_ += amount1Principal;
+            values_[0] += amount0Principal;
+            values_[1] += amount1Principal;
         }
     }
 }

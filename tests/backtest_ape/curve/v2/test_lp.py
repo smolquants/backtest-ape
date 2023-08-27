@@ -166,8 +166,8 @@ def test_record(runner, path):
         ],
         "total_supply": 183341149725574822964704,
     }
-    value = 3000000000
-    runner.record(path, number, state, value)
+    values = [3000000000]
+    runner.record(path, number, state, values)
 
     # check pd dataframe has new row
     df = pd.read_csv(path)
@@ -175,7 +175,7 @@ def test_record(runner, path):
         list(df.columns),
         [
             "number",
-            "value",
+            "values0",
             "D",
             "total_supply",
             "balances0",
@@ -192,7 +192,7 @@ def test_record(runner, path):
 
     row = df.iloc[0]
     assert int(row["number"]) == int(number)
-    assert int(row["value"]) == int(value)
+    assert int(row["values0"]) == int(values[0])
     assert int(row["D"]) == int(state["D"])
     assert int(row["total_supply"]) == int(state["total_supply"])
     assert int(row["balances0"]) == int(state["balances"][0])

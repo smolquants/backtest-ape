@@ -15,10 +15,11 @@ contract GearboxV2CABacktest is Backtest {
     }
 
     /// @notice Reports the current health factor of the credit account
-    /// @return value_ The current health factor of the credit account
-    function value() public view virtual override returns (uint256 value_) {
+    /// @return values_ The current health factor of the credit account
+    function values() public view virtual override returns (uint256[] memory values_) {
+        uint256[] memory values_ = new uint256[](1);
         address facade = ICreditManagerV2(manager).creditFacade();
         address account = ICreditManagerV2(manager).creditAccounts(address(this));
-        value_ = ICreditFacade(facade).calcCreditAccountHealthFactor(account);
+        values_[0] = ICreditFacade(facade).calcCreditAccountHealthFactor(account);
     }
 }
