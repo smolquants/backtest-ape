@@ -42,9 +42,9 @@ def test_multicall(backtest, WETH9, acc):
     assert acc.balance == prior_acc_bal - tv - receipt.total_fees_paid
 
 
-def test_value(backtest, acc):
-    assert backtest.value() == 0
+def test_values(backtest, acc):
+    assert backtest.values() == [0]
 
     # send 1 eth in to backtester
     acc.transfer(backtest.address, 1000000000000000000)  # 1 wad
-    assert backtest.value() == 1000000000000000000
+    assert backtest.values() == [1000000000000000000]

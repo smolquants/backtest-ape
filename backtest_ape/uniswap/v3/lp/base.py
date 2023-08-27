@@ -1,5 +1,5 @@
 import os
-from typing import ClassVar, Mapping, Optional
+from typing import ClassVar, List, Mapping, Optional
 
 import pandas as pd
 
@@ -155,7 +155,7 @@ class UniswapV3LPBaseRunner(BaseUniswapV3Runner):
         """
         pass
 
-    def record(self, path: str, number: int, state: Mapping, value: int):
+    def record(self, path: str, number: int, state: Mapping, values: List[int]):
         """
         Records the value and possibly some state at the given block.
 
@@ -163,9 +163,12 @@ class UniswapV3LPBaseRunner(BaseUniswapV3Runner):
             path (str): The path to the csv file to write the record to.
             number (int): The block number.
             state (Mapping): The state of references at block number.
-            value (int): The value of the backtester for the state.
+            values (List[int]): The values of the backtester for the state.
         """
-        data = {"number": number, "value": value}
+        data = {"number": number}
+        for i, value in enumerate(values):
+            data[f"values{i}"] = value
+
         data.update(
             {
                 "sqrtPriceX96": state["slot0"].sqrtPriceX96,

@@ -146,7 +146,7 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("update_strategy not implemented.")
 
-    def record(self, path: str, number: int, state: Mapping, value: int):
+    def record(self, path: str, number: int, state: Mapping, values: List[int]):
         """
         Records the value and possibly some state at the given block.
 
@@ -154,7 +154,7 @@ class BaseRunner(BaseModel):
             path (str): The path to the csv file to write the record to.
             number (int): The block number.
             state (Mapping): The state of references at block number.
-            value (int): The value of the backtester for the state.
+            values (List[int]): The values from the backtester for the state.
         """
         raise NotImplementedError("record not implemented.")
 
@@ -167,7 +167,7 @@ class BaseRunner(BaseModel):
         method manually sets via RPC call.
 
         Args:
-            number (Optiona[int]): The block number.
+            number (Optional[int]): The block number.
         """
         endpoint = None
         if chain.provider.name == "foundry":
@@ -271,10 +271,10 @@ class BaseRunner(BaseModel):
             # set the state of mocks to refs state for vars
             self.set_mocks_state(refs_state)
 
-            # record value function on backtester and any additional state
-            value = self.backtester.value()
-            click.echo(f"Backtester value at block {number}: {value}")
-            self.record(path, number, refs_state, value)
+            # record values function on backtester and any additional state
+            values = self.backtester.values()
+            click.echo(f"Backtester values at block {number}: {values}")
+            self.record(path, number, refs_state, values)
 
             # update backtested strategy based off new mock state, if needed
             click.echo(f"Updating strategy at block {number} ...")
@@ -342,10 +342,10 @@ class BaseRunner(BaseModel):
             click.echo(f"Submitting {len(ref_txs)} ref txs from block {number} ...")
             self.submit_txs(ref_txs)
 
-            # record value function on backtester
-            value = self.backtester.value()
-            click.echo(f"Backtester value at block {number}: {value}")
-            self.record(path, number, refs_state, value)
+            # record values function on backtester and any additional state
+            values = self.backtester.values()
+            click.echo(f"Backtester values at block {number}: {values}")
+            self.record(path, number, refs_state, values)
 
             # update backtested strategy based off current chain state, if needed
             click.echo(f"Updating strategy at block {number} ...")

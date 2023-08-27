@@ -229,7 +229,7 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         """
         pass
 
-    def record(self, path: str, number: int, state: Mapping, value: int):
+    def record(self, path: str, number: int, state: Mapping, values: List[int]):
         """
         Records the value and possibly some state at the given block.
 
@@ -237,9 +237,13 @@ class CurveV2LPRunner(BaseCurveV2Runner):
             path (str): The path to the csv file to write the record to.
             number (int): The block number.
             state (Mapping): The state of references at block number.
-            value (int): The value of the backtester for the state.
+            values (List[int]): The value of the backtester for the state.
         """
-        data = {"number": number, "value": value}
+        data = {"number": number}
+        for i, value in enumerate(values):
+            data[f"values{i}"] = value
+
+        # add the state
         data.update(state)
 
         # unfold the lists

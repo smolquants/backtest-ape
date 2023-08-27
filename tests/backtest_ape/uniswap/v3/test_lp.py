@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from backtest_ape.uniswap.v3.lp import UniswapV3LPTotal1Runner
+from backtest_ape.uniswap.v3.lp import UniswapV3LPTotalRunner
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def runner():
     tick_upper = 207240  # ~ 1000 * 1e6 USDC per 1e18 WETH
     amount0 = 34427240000  # 34,427.24 * 1e6 USDC
     amount1 = 67000000000000000000  # 67 * 1e18 WETH
-    return UniswapV3LPTotal1Runner(
+    return UniswapV3LPTotalRunner(
         ref_addrs={
             "pool": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8",
             "manager": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
@@ -166,8 +166,8 @@ def test_record(runner, path):
         "tick_info_lower": ref_pool.ticks(runner.tick_lower, block_identifier=number),
         "tick_info_upper": ref_pool.ticks(runner.tick_upper, block_identifier=number),
     }
-    value = int(120 * 1e18)
-    runner.record(path, number, state, value)
+    values = [int(120 * 1e18), int(60 * 1e6)]
+    runner.record(path, number, state, values)
 
     # check pd dataframe has new row
     df = pd.read_csv(path)
@@ -175,7 +175,8 @@ def test_record(runner, path):
         list(df.columns),
         [
             "number",
-            "value",
+            "values0",
+            "values1",
             "sqrtPriceX96",
             "liquidity",
             "feeGrowthGlobal0X128",
@@ -189,7 +190,8 @@ def test_record(runner, path):
 
     row = df.iloc[0]
     assert int(row["number"]) == int(number)
-    assert int(row["value"]) == int(value)
+    assert int(row["values0"]) == int(values[0])
+    assert int(row["values1"]) == int(values[1])
     assert int(row["sqrtPriceX96"]) == int(state["slot0"].sqrtPriceX96)
     assert int(row["liquidity"]) == int(state["liquidity"])
     assert int(row["feeGrowthGlobal0X128"]) == int(state["fee_growth_global0_x128"])

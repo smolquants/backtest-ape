@@ -53,7 +53,7 @@ abstract contract Backtest {
         require(msg.value == valueCumulative, "msg.value != sum of msg values");
     }
 
-    /// @notice Reports the current value of the strategy
-    /// @return The current value
-    function value() public view virtual returns (uint256);
+    /// @notice Reports the current values of the strategy for record
+    /// @return The current strategy values
+    function values() public view virtual returns (uint256[] memory);
 }

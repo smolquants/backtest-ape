@@ -242,7 +242,7 @@ class BaseGearboxV2Runner(BaseRunner):
         """
         pass
 
-    def record(self, path: str, number: int, state: Mapping, value: int):
+    def record(self, path: str, number: int, state: Mapping, values: List[int]):
         """
         Records the value and possibly some state at the given block.
 
@@ -250,9 +250,11 @@ class BaseGearboxV2Runner(BaseRunner):
             path (str): The path to the csv file to write the record to.
             number (int): The block number.
             state (Mapping): The state of references at block number.
-            value (int): The value of the backtester for the state.
+            values (List[int]): The values of the backtester for the state.
         """
-        data = {"number": number, "value": value}
+        data = {"number": number}
+        for i, value in enumerate(values):
+            data[f"values{i}"] = value
 
         # only add value from oracle feed
         feeds = self._refs["feeds"]

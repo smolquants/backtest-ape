@@ -4,8 +4,7 @@ from backtest_ape.gearbox.v2 import BaseGearboxV2Runner, GearboxV2STETHRunner
 from backtest_ape.uniswap.v3 import (
     BaseUniswapV3Runner,
     UniswapV3LPBaseRunner,
-    UniswapV3LPTotal0Runner,
-    UniswapV3LPTotal1Runner,
+    UniswapV3LPTotalRunner,
 )
 
 __all__ = [
@@ -16,6 +15,5 @@ __all__ = [
     "CurveV2LPRunner",
     "GearboxV2STETHRunner",
     "UniswapV3LPBaseRunner",
-    "UniswapV3LPTotal0Runner",
-    "UniswapV3LPTotal1Runner",
+    "UniswapV3LPTotalRunner",
 ]

@@ -139,18 +139,18 @@ def test_record(runner, path):
         ),
     ]
     state = {"feeds": state_feeds}
-    value = 100000000000000000  # 1e18
-    runner.record(path, number, state, value)
+    values = [100000000000000000]  # 1e18
+    runner.record(path, number, state, values)
 
     # check pd dataframe has new row
     df = pd.read_csv(path)
     np.testing.assert_equal(
         list(df.columns),
-        ["number", "value", "ETH / USD", "STETH / ETH ETH/USD Composite"],
+        ["number", "values0", "ETH / USD", "STETH / ETH ETH/USD Composite"],
     )
 
     row = df.iloc[0]
     assert int(row["number"]) == int(number)
-    assert int(row["value"]) == int(value)
+    assert int(row["values0"]) == int(values[0])
     assert int(row["ETH / USD"]) == int(state["feeds"][0][1])
     assert int(row["STETH / ETH ETH/USD Composite"]) == int(state["feeds"][1][1])

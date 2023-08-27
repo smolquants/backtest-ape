@@ -25,10 +25,11 @@ contract CurveV2LPBacktest is Backtest {
     }
 
     /// @notice Reports the coin0 (quote) value of the LP token
-    /// @return value_ The current coin0 value of the LP tokens owned by this contract
-    function value() public view virtual override returns (uint256 value_) {
+    /// @return values_ The current coin0 value of the LP tokens owned by this contract
+    function values() public view virtual override returns (uint256[] memory values_) {
         uint256 amount = lp.balanceOf(address(this));
         uint256 totalSupply = lp.totalSupply();
+        values_ = new uint256[](1);
 
         // adjust amount for rounding
         // See https://github.com/curvefi/tricrypto-ng/blob/main/contracts/old/CurveCryptoSwap.vy#L844
@@ -38,13 +39,13 @@ contract CurveV2LPBacktest is Backtest {
         for (uint256 i = 0; i < numCoins; ++i) {
             uint256 balance = (pool.balances(i) * amount) / totalSupply;
             if (i == 0) {
-                value_ += balance;
+                values_[0] += balance;
                 continue;
             }
 
             // convert values to coin0 denom using oracle price
             uint256 price = pool.price_oracle(i - 1);
-            value_ += ((price * balance * 10 ** decimals[0]) / (10 ** (18 + decimals[i]))); // mulDiv and decimal conversion
+            values_[0] += ((price * balance * 10 ** decimals[0]) / (10 ** (18 + decimals[i]))); // mulDiv and decimal conversion
         }
     }
 }
