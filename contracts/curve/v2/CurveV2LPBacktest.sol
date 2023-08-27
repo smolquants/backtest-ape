@@ -29,7 +29,7 @@ contract CurveV2LPBacktest is Backtest {
     function values() public view virtual override returns (uint256[] memory values_) {
         uint256 amount = lp.balanceOf(address(this));
         uint256 totalSupply = lp.totalSupply();
-        uint256[] memory values_ = new uint256[](1);
+        values_ = new uint256[](1);
 
         // adjust amount for rounding
         // See https://github.com/curvefi/tricrypto-ng/blob/main/contracts/old/CurveCryptoSwap.vy#L844

@@ -12,7 +12,7 @@ contract UniswapV3LPPrincipalBacktest is UniswapV3LPBacktest {
     /// @notice Reports the principal (token0, token1) values of the LP tokens owned by this contract
     /// @return values_ The current (token0, token1) principals of the LP tokens owned by this contract
     function values() public view virtual override returns (uint256[] memory values_) {
-        uint256[] memory values_ = new uint256[](2);
+        values_ = new uint256[](2);
         for (uint256 i = 0; i < tokenIds.length; ++i) {
             uint256 tokenId = tokenIds[i];
             (, , address token0, address token1, uint24 fee, , , , , , , ) = manager.positions(tokenId);
