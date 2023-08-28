@@ -43,9 +43,27 @@ def mint_lp_position(
     backtester.execute(target, data, value, sender=acc)
 
 
+def collect_fees_from_lp_position(
+    manager: ContractInstance,
+    backtester: ContractInstance,
+    token_id: int,
+    acc: AccountAPI,
+):
+    """
+    Collects fees from an existing LP position owned by backtester.
+    """
+    ecosystem = chain.provider.network.ecosystem
+    target = manager.address
+    params = (token_id, backtester.address, 2**256 - 1, 2**256 - 1)
+    data = ecosystem.encode_transaction(
+        manager.address, manager.collect.abis[0], params
+    ).data
+    value = 0
+    backtester.execute(target, data, value, sender=acc)
+
+
 def remove_liquidity_from_lp_position(
     manager: ContractInstance,
-    pool: ContractInstance,
     backtester: ContractInstance,
     token_id: int,
     liquidity: int,
