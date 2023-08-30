@@ -100,12 +100,13 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("deploy_mocks not implemented.")
 
-    def init_mocks_state(self, state: Mapping):
+    def init_mocks_state(self, number: int, state: Mapping):
         """
         Initializes the state of mocks.
 
         Args:
-            state (Mapping): The init state of mocks.
+            number (int): The init block number.
+            state (Mapping): The init state of mocks at block number.
         """
         raise NotImplementedError("init_mocks_state not implemented.")
 
@@ -256,7 +257,7 @@ class BaseRunner(BaseModel):
             raise Exception("runner not initialized.")
 
         click.echo(f"Initializing state of mocks from block number {start} ...")
-        self.init_mocks_state(self.get_refs_state(start))
+        self.init_mocks_state(start, self.get_refs_state(start))
 
         click.echo(
             f"Iterating from block number {start+1} to {stop} with step size {step} ..."

@@ -86,12 +86,13 @@ class CurveV2LPRunner(BaseCurveV2Runner):
         state["total_supply"] = ref_lp.totalSupply(block_identifier=block_identifier)
         return state
 
-    def init_mocks_state(self, state: Mapping):
+    def init_mocks_state(self, number: int, state: Mapping):
         """
         Initializes the state of mocks.
 
         Args:
-            state (Mapping): The init state of mocks.
+            number (int): The init block number.
+            state (Mapping): The init state of mocks at block number.
         """
         mock_pool = self._mocks["pool"]
         mock_lp = self._mocks["lp"]

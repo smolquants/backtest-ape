@@ -69,12 +69,13 @@ class UniswapV3LPBaseRunner(BaseUniswapV3Runner):
         )
         return state
 
-    def init_mocks_state(self, state: Mapping):
+    def init_mocks_state(self, number: int, state: Mapping):
         """
         Initializes the state of mocks.
 
         Args:
-            state (Mapping): The init state of mocks.
+            number (int): The init block number.
+            state (Mapping): The init state of mocks at block number.
         """
         mock_tokens = self._mocks["tokens"]
         mock_manager = self._mocks["manager"]

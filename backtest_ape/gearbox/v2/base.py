@@ -159,12 +159,13 @@ class BaseGearboxV2Runner(BaseRunner):
         ]
         return state
 
-    def init_mocks_state(self, state: Mapping):
+    def init_mocks_state(self, number: int, state: Mapping):
         """
         Initializes the state of mocks.
 
         Args:
-            state (Mapping): The init state of mocks.
+            number (int): The init block number.
+            state (Mapping): The init state of mocks at block number.
         """
         facade = self._refs["facade"]
         price_oracle = self._refs["price_oracle"]

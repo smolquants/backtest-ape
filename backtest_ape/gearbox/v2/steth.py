@@ -46,7 +46,7 @@ class GearboxV2STETHRunner(BaseGearboxV2Runner):
         self.deploy_strategy(*[manager_addr])
         self._initialized = True
 
-    def init_mocks_state(self, state: Mapping):
+    def init_mocks_state(self, number: int, state: Mapping):
         """
         Initializes the state of mocks.
 
@@ -54,7 +54,8 @@ class GearboxV2STETHRunner(BaseGearboxV2Runner):
         backtester.
 
         Args:
-            state(Mapping): The init state of mocks.
+            number (int): The init block number.
+            state (Mapping): The init state of mocks at block number.
         """
         super().init_mocks_state(state)
 
