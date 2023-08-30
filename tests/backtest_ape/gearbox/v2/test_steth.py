@@ -53,6 +53,7 @@ def test_get_refs_state(runner):
 @pytest.mark.skip
 def test_init_mocks_state(runner, WETH9, STETH):
     runner.setup()
+    number = 16254713
     state_feeds = [
         (
             92233720368547797298,
@@ -70,7 +71,7 @@ def test_init_mocks_state(runner, WETH9, STETH):
         ),
     ]
     state = {"feeds": state_feeds}
-    runner.init_mocks_state(state)
+    runner.init_mocks_state(number, state)
 
     # check mock price feeds added for collaterals
     price_oracle = runner._refs["price_oracle"]

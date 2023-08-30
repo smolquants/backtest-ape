@@ -84,7 +84,7 @@ def test_init_mocks_state(runner):
         "tick_info_lower": ref_pool.ticks(runner.tick_lower, block_identifier=number),
         "tick_info_upper": ref_pool.ticks(runner.tick_upper, block_identifier=number),
     }
-    runner.init_mocks_state(state)
+    runner.init_mocks_state(number, state)
 
     # check position nft minted and pushed to backtest contract
     mock_manager = runner._mocks["manager"]

@@ -52,6 +52,7 @@ def test_init_mocks_state(runner):
     mock_lp = runner._mocks["lp"]
     mock_coins = runner._mocks["coins"]
 
+    number = 16254713
     state = {
         "balances": [
             51444788313173,
@@ -71,7 +72,7 @@ def test_init_mocks_state(runner):
         ],
         "total_supply": 183341149725574822964704,
     }
-    runner.init_mocks_state(state)
+    runner.init_mocks_state(number, state)
 
     coin_balances = []
     for i, mock_coin in enumerate(mock_coins):
