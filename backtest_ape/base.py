@@ -8,6 +8,7 @@ from ape.api.transactions import TransactionAPI
 from ape.contracts import ContractInstance
 from ape.exceptions import ContractLogicError
 from pydantic import BaseModel, validator
+from ape_risk.stats.montecarlo import MonteCarlo
 
 from backtest_ape.utils import fund_account, get_impersonated_account, get_test_account
 
@@ -355,15 +356,64 @@ class BaseRunner(BaseModel):
             click.echo("Replenishing funds in account ...")
             self.fund_account()
 
-    def forwardtest(self, data: pd.DataFrame) -> pd.DataFrame:
+    def get_simulated_states(self, mc: MonteCarlo) -> Mapping:
+        """
+        Gets all simulated states.
+
+        Args:
+            mc (:class:`MonteCarlo`):
+                Object of class MonteCarlo.
+
+        Returns:
+            Mapping: The simulated states.
+        """
+        simulation = mc.sims()
+        states = {}
+        for idx in range(mc.num_sims+1):
+            states[idx] = {"sim": simulation[idx]}
+        return states
+
+    def forwardtest(self, mc: MonteCarlo, path: str) -> pd.DataFrame:
         """
         Forwardtests strategy against Monte Carlo simulated data.
 
         Args:
-            data (:class:`pd.DataFrame`):
-                Historical data to generate Monte Carlo sims from.
+            mc (:class:`MonteCarlo`):
+                Object of class MonteCarlo.
 
         Returns:
             :class:`pandas.DataFrame`: The generated backtester values.
         """
-        raise NotImplementedError("forwardtest not implemented.")
+        if chain.provider.network.name != "mainnet-fork":
+            raise Exception("network not mainnet-fork.")
+
+        click.echo("Setting up runner ...")
+        self.setup(mocking=True)
+
+        if not self._initialized:
+            raise Exception("runner not initialized.")
+
+        click.echo("Getting Monte Carlo simulated data ...")
+        sim_states = self.get_simulated_states(mc)
+
+        click.echo(f"Initializing zeroth simulated state ...")
+        self.init_mocks_state(sim_states[0])
+
+        click.echo(
+            f"Iterating from simulated state #{1} to #{mc.num_sims} ..."
+        )
+        for number in range(1, len(mc.num_sims+1)):
+            sim_state = sim_states[number]
+            click.echo(f"Simulated state #{number}: {sim_state}")
+
+            # set the state of mocks to refs state for vars
+            self.set_mocks_state(sim_state)
+
+            # record value function on forwardtester and any additional state
+            value = self.backtester.value()
+            click.echo(f"Forwardtester value at simulated state #{number}: {value}")
+            self.record(path, number, sim_state, value)
+
+            # replenish funds for acc
+            click.echo("Replenishing funds in account ...")
+            self.fund_account()
