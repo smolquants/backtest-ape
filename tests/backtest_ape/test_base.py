@@ -75,6 +75,29 @@ def test_validator_when_not_has_keys():
         Runner(ref_addrs={})
 
 
+def test_snapshot(number, runner):
+    runner.reset_fork(number - 1)
+    (snapshot_chain_id, snapshot_runner_kwargs) = runner.snapshot()
+    assert snapshot_chain_id is not None
+    assert snapshot_runner_kwargs == dict(runner)
+
+
+def test_restore(number, runner):
+    runner.reset_fork(number - 1)
+    (snapshot_chain_id, snapshot_runner_kwargs) = runner.snapshot()
+
+    # change runner account addr
+    runner.acc_addr = "0x0"
+
+    # mine chain a block
+    chain.mine()
+
+    # restore should bring chain, runner back to snapshot
+    runner.restore(snapshot_chain_id, snapshot_runner_kwargs)
+    assert chain.blocks.head.number == number - 1
+    assert runner.acc_addr is None
+
+
 def test_reset_fork(number, runner):
     transactions = chain.blocks[number + 1].transactions
     base_fee = chain.blocks[number].base_fee
@@ -119,15 +142,8 @@ def test_submit_txs(number, runner):
     transactions = chain.blocks[number].transactions
     runner.reset_fork(number - 1)
 
-    print("transactions", transactions)
-
     txs = transactions[1:10]  # know all of these do *not* revert
-
-    print("txs", txs)
-
     runner.submit_txs(txs)
-
-    print("number", number)
 
     # check each tx in txs submitted in separate block or passed due to silent fail
     # TODO: fix silent fail case

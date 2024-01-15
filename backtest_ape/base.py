@@ -7,6 +7,7 @@ from ape.api.accounts import AccountAPI
 from ape.api.transactions import TransactionAPI
 from ape.contracts import ContractInstance
 from ape.exceptions import ContractLogicError
+from ape.types import SnapshotID
 from pydantic import BaseModel, validator
 
 from backtest_ape.utils import fund_account, get_impersonated_account, get_test_account
@@ -159,6 +160,32 @@ class BaseRunner(BaseModel):
         """
         raise NotImplementedError("record not implemented.")
 
+    def snapshot(self) -> (SnapshotID, Mapping):
+        """
+        Snapshot current state of chain and runner.
+        """
+        snapshot_chain_id = chain.snapshot()
+        snapshot_runner_kwargs = dict(self)
+        return (snapshot_chain_id, snapshot_runner_kwargs)
+
+    def restore(self, snapshot_chain_id: SnapshotID, snapshot_runner_kwargs: Mapping):
+        """
+        Restores the state of chain and runner to given snapshot.
+
+        WARNING: Must call self.snapshot() prior to generate a chain snapshot
+        to restore from. Will need to override in case need to include runner
+        snapshot args of private fields.
+
+        Args:
+            snapshot_chain_id (ape.types.SnapshotID): The snapshot ID generated for chain.
+            snapshot_runner_kwargs (Mapping): State of runner kwargs at chain snapshot.
+        """
+        chain.restore(snapshot_chain_id)
+        for k, v in snapshot_runner_kwargs.items():
+            if not hasattr(self, k):
+                raise Exception(f"runner does not have attr {k}.")
+            setattr(self, k, v)
+
     def reset_fork(self, number: int):
         """
         Resets the fork state to the given block.
@@ -265,25 +292,37 @@ class BaseRunner(BaseModel):
         for number in range(start + 1, stop, step):
             click.echo(f"Processing block {number} ...")
 
-            # get the state of refs for vars care about at block.number
-            refs_state = self.get_refs_state(number)
-            click.echo(f"State of refs at block {number}: {refs_state}")
+            # snapshot in case contract logic error revert
+            (snapshot_chain_id, snapshot_runner_kwargs) = self.snapshot()
 
-            # set the state of mocks to refs state for vars
-            self.set_mocks_state(refs_state)
+            try:
+                # get the state of refs for vars care about at block.number
+                refs_state = self.get_refs_state(number)
+                click.echo(f"State of refs at block {number}: {refs_state}")
 
-            # record values function on backtester and any additional state
-            values = self.backtester.values()
-            click.echo(f"Backtester values at block {number}: {values}")
-            self.record(path, number, refs_state, values)
+                # set the state of mocks to refs state for vars
+                self.set_mocks_state(refs_state)
 
-            # update backtested strategy based off new mock state, if needed
-            click.echo(f"Updating strategy at block {number} ...")
-            self.update_strategy(number, refs_state)
+                # record values function on backtester and any additional state
+                values = self.backtester.values()
+                click.echo(f"Backtester values at block {number}: {values}")
+                self.record(path, number, refs_state, values)
 
-            # replenish funds for acc
-            click.echo("Replenishing funds in account ...")
-            self.fund_account()
+                # update backtested strategy based off new mock state, if needed
+                click.echo(f"Updating strategy at block {number} ...")
+                self.update_strategy(number, refs_state)
+
+                # replenish funds for acc
+                click.echo("Replenishing funds in account ...")
+                self.fund_account()
+            except ContractLogicError:
+                # backtest can keep going on next iteration given mocking chain state from ref at next block
+                click.secho(
+                    f"Failed to process block {number}. Reverting runner and chain state to prior iteration ...",
+                    blink=True,
+                    bold=True,
+                )
+                self.restore(snapshot_chain_id, snapshot_runner_kwargs)
 
     def replay(
         self,
