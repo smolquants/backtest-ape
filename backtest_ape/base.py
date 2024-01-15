@@ -177,8 +177,10 @@ class BaseRunner(BaseModel):
         snapshot args of private fields.
 
         Args:
-            snapshot_chain_id (ape.types.SnapshotID): The snapshot ID generated for chain.
-            snapshot_runner_kwargs (Mapping): State of runner kwargs at chain snapshot.
+            snapshot_chain_id (ape.types.SnapshotID): The snapshot ID generated
+                for chain.
+            snapshot_runner_kwargs (Mapping): State of runner kwargs at chain
+                snapshot.
         """
         chain.restore(snapshot_chain_id)
         for k, v in snapshot_runner_kwargs.items():
@@ -316,12 +318,14 @@ class BaseRunner(BaseModel):
                 click.echo("Replenishing funds in account ...")
                 self.fund_account()
             except ContractLogicError:
-                # backtest can keep going on next iteration given mocking chain state from ref at next block
+                # backtest can keep going on next iteration given mocking chain
+                # state from ref at next block
                 click.secho(
-                    f"Failed to process block {number}. Reverting runner and chain state to prior iteration ...",
+                    f"Failed to process block {number}",
                     blink=True,
                     bold=True,
                 )
+                click.echo("Reverting runner and chain state to prior iteration ...")
                 self.restore(snapshot_chain_id, snapshot_runner_kwargs)
 
     def replay(
