@@ -23,12 +23,12 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
-  "eth-ape>=0.6.12,<0.7.0",
+  "eth-ape>=0.7.0,<0.8.0",
   "pandas",
   "scipy",
   "matplotlib",
-  "numpy>=1.21,<2.0",
-  "hypothesis>=6.2.0,<7.0",  # Strategy-based fuzzer
+  "numpy",
+  "hypothesis",  # Strategy-based fuzzer
   "typing-inspect==0.8.0",
 ]
 dynamic = ["version"]

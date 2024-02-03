@@ -6,7 +6,6 @@ plugins:
   - name: foundry
   - name: notebook
   - name: etherscan
-  - name: risk
   - name: vyper
 
 default_ecosystem: ethereum
@@ -28,10 +27,10 @@ dependencies:
     version: 4.7.3
   - name: UniswapV3Core
     github: Uniswap/v3-core
-    ref: 0.8
+    ref: "0.8"
   - name: UniswapV3Periphery
     github: Uniswap/v3-periphery
-    ref: 0.8
+    ref: "0.8"
   - name: GearboxV2Core
     github: Gearbox-protocol/core-v2
     version: 1.7.2
